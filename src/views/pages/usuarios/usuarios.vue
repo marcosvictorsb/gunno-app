@@ -1,7 +1,8 @@
 <!-- eslint-disable prettier/prettier -->
 <template>
-  <div>
-    <DataTable v-model:editingRows="editingRows" :value="users" showGridlines editMode="row" dataKey="id"
+  <div>    
+    <DataTable v-model:editingRows="editingRows" :value="users" paginator :rows="10" :rowsPerPageOptions="[10, 20, 50]" 
+    showGridlines editMode="row" dataKey="id" class="p-datatable-sm"
     :pt="{
         table: { style: 'min-width: 50rem' },
         column: {
@@ -14,7 +15,7 @@
     <template #header>
         <div class="flex flex-wrap align-items-center justify-content-between gap-2">
             <span class="text-xl text-900 font-bold">Usuários</span>
-            <Button label="Cadastrar usuário" severity="info" />
+            <Button label="Cadastrar usuário" severity="info" @click="addUser" />
         </div>
     </template>
 
@@ -31,13 +32,14 @@
       <Column  header="Ações" :rowEditor="true" style="width: 10%; min-width: 8rem" bodyStyle="text-align:center">
         <template #body="slotProps">
             <Button icon="pi pi-pencil" outlined rounded class="mr-2" @click="editUser(slotProps.data)" />
-            <Button icon="pi pi-trash" outlined rounded severity="danger" @click="confirmDeleteProduct(slotProps.data)" />
+            <Button icon="pi pi-trash" outlined rounded severity="danger" @click="confirmDeleteUser(slotProps.data)" />
           </template>
       </Column>
     </DataTable>
+    <Toast />
   </div>
   <div>
-    <Dialog v-model:visible="userDialog" :style="{width: '450px'}" header="Informações do usuário" :modal="true" class="p-fluid">
+    <Dialog v-model:visible="userDialog" :style="{width: '450px'}" :header="userDialogTitle" :modal="true" class="p-fluid">
       <div class="field">
           <label for="name">Name</label>
           <InputText id="name" v-model.trim="user.name" required="true" autofocus :class="{'p-invalid': submitted && !user.name}" />
@@ -56,8 +58,9 @@
             :maxSelectedLabels="3" />
       </div>
       <template #footer>
-        <Button label="Cancel" icon="pi pi-times" text @click="hideDialog"/>
-        <Button label="Save" icon="pi pi-check" text @click="saveUserEdited" />
+        <Button label="Cancelar" icon="pi pi-times" text @click="hideDialog" />
+        <Button label="Editar" icon="pi pi-check" text @click="saveUserEdited" v-if="isEditUser"/>
+        <Button label="Salvar" icon="pi pi-check" text @click="saveUser" v-if="!isEditUser"/>
       </template>
     </Dialog>
   </div>
@@ -72,6 +75,7 @@ import MultiSelect from 'primevue/multiselect';
 import UserService from '../../../service/UserService';
 import TeamService from '../../../service/TeamService';
 import TeamUserService from '../../../service/TeamUserService';
+import { useToast } from 'primevue/usetoast';
 
 export default {
   components: {
@@ -84,36 +88,43 @@ export default {
     return {
       users: [],
       user: null,
+      isEditUser: false,
       teams: [],
       selectedTeam: [],
       editingRows: [],
       userDialog: false,
-      submitted: false
+      userDialogTitle: '',
+      submitted: false,
+      toast: useToast()
+
     };
   },
   async created() {
     await this.initialMethods();
   },
-  mounted() {
-    //vProductService.getProductsMini().then((data) => (this.products = data));
-  },
   methods: {
     async editUser(user) {
-      this.user = user;
-      this.userDialog = true;
-      this.selectedTeam = [];
-
-      const { status, body } = (await TeamUserService.getByUser(user.id)).data;
-
-      if (status === 404) {
+      try {
+        this.user = user;
+        this.userDialog = true;
+        this.userDialogTitle = 'Informações do usuário';
         this.selectedTeam = [];
-        return;
+        this.isEditUser = true;
+
+        const { status, body } = (await TeamUserService.getByUser(user.id)).data;
+
+        if (status === 404) {
+          this.selectedTeam = [];
+          return;
+        }
+        const teamUsers = body.result;
+        teamUsers.map(async (item) => {
+          const result = (await TeamService.getAllTeamsByID(item.teamId)).data.body.result;
+          this.selectedTeam.push(result);
+        });
+      } catch (error) {
+        console.log({ error });
       }
-      const teamUsers = body.result;
-      teamUsers.map(async (item) => {
-        const result = (await TeamService.getAllTeamsByID(item.teamId)).data.body.result;
-        this.selectedTeam.push(result);
-      });
     },
     hideDialog() {
       this.userDialog = false;
@@ -134,8 +145,48 @@ export default {
 
         await this.initialMethods();
         this.userDialog = false;
+        this.toast.add({ severity: 'success', detail: 'Usuário editado', life: 3000 });
       } catch (error) {
+        this.toast.add({ severity: 'error', sdetail: 'Error ao editar o usuário', life: 3000 });
         return 0;
+      }
+    },
+    async confirmDeleteUser(user) {
+      try {
+        await UserService.delete(user.id);
+        await this.initialMethods();
+        this.toast.add({ severity: 'success', detail: 'Usuário deletado', life: 3000 });
+      } catch (error) {
+        console.log({ error });
+        this.toast.add({ severity: 'error', sdetail: 'Error ao deletar o usuário', life: 3000 });
+      }
+    },
+    addUser() {
+      this.userDialog = true;
+      this.user = [];
+      this.userDialogTitle = 'Cadastrar usuário';
+      this.isEditUser = false;
+      this.selectedTeam = [];
+    },
+    async saveUser() {
+      try {
+        const payload = {
+          name: this.user.name,
+          email: this.user.email,
+          password: '123456',
+          admin: false,
+          idcompany: '0c749690-345c-4f98-9272-d18557c10386'
+        };
+        const userCreated = (await UserService.created(payload)).data.body.result;
+        const payloadTeamUser = { selectedTeam: this.selectedTeam, userId: userCreated.id, companyId: '0c749690-345c-4f98-9272-d18557c10386' };
+        await TeamUserService.edit(payloadTeamUser);
+
+        await this.initialMethods();
+        this.userDialog = false;
+        this.toast.add({ severity: 'success', detail: 'Usuário criado', life: 3000 });
+      } catch (error) {
+        console.log({ error });
+        this.toast.add({ severity: 'error', sdetail: 'Error ao cadastrar o usuário', life: 3000 });
       }
     }
   }

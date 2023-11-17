@@ -3,7 +3,7 @@ import ApiService from './ApiService';
 
 class UserService {
   constructor() {
-   this.api = ApiService;
+    this.api = ApiService;
     this.options = {
       headers: {
         'Content-Type': 'application/json',
