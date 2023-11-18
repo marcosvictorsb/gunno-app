@@ -126,8 +126,9 @@ export default {
         console.log({ error });
       }
     },
-    hideDialog() {
+    async hideDialog() {
       this.userDialog = false;
+      await this.initialMethods();
     },
     async initialMethods() {
       const { body } = (await UserService.getAllUser('0c749690-345c-4f98-9272-d18557c10386')).data;

@@ -16,7 +16,7 @@ export default {
           label: 'FUNÇÕES',
           items: [
             { label: 'Usuários', icon: 'pi pi-fw pi pi-user', to: '/usuarios' },
-            // { label: 'Equipes', icon: 'pi pi-fw pi-check-square', to: '/uikit/input' },
+            { label: 'Equipes', icon: 'pi pi-fw pi-users', to: '/equipes' },
           ]
         },
         {

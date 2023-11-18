@@ -20,24 +20,19 @@ class TeamService {
     return await this.api.get(`/team/${idTeam}`);
   }
 
-//   async created(team, idcompany) {
-//     const data = { name: team, idcompany};
-//     return await this.api.post('/team', data);
-//   }
+  async created(name, idcompany) {
+    const data = { name, idcompany };
+    return await this.api.post('/team', data);
+  }
 
-//   async updateNameTeam(id, name) {
-//     const data = { name };
-//     return await this.api.put(`/team/${id}`, data);
-//   }
+  async updateNameTeam(id, name) {
+    const data = { name };
+    return await this.api.put(`/team/${id}`, data);
+  }
 
-//   async deleteTeam(id) {
-//     return await this.api.delete(`/team/${id}`);
-//   }
-
-//   async getAllTeams(idcompany){
-//     const data = { idcompany}; 
-//     return await this.api.get(`/team/all`, {params: data});
-//   }
+  async deleteTeam(id) {
+    return await this.api.delete(`/team/${id}`);
+  }
 }
 
 export default new TeamService();
