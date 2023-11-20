@@ -96,7 +96,7 @@ export default {
     },
     async initialMethods() {
       try {
-        const idcompany = '0c749690-345c-4f98-9272-d18557c10386';
+        const idcompany = 1;
         const { body } = (await TeamService.getTeams(idcompany)).data;
         this.teams = body.result.teams;
       } catch (error) {
@@ -136,7 +136,7 @@ export default {
     },
     async saveTeam() {
       try {
-        const idcompany = '0c749690-345c-4f98-9272-d18557c10386';
+        const idcompany = 1;
         await TeamService.created(this.team.name, idcompany);
         await this.initialMethods();
         this.teamDialog = false;

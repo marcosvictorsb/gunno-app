@@ -1,4 +1,18 @@
 <!-- eslint-disable prettier/prettier -->
+<template>
+    <ul class="layout-menu">
+    <template v-for="(item, i) in model" :key="item">
+      <app-menu-item v-if="!item.separator" :item="item" :index="i"></app-menu-item>
+            <li v-if="item.separator" class="menu-separator"></li>
+    </template>
+    <li>
+      <a href="https://www.primefaces.org/primeblocks-vue/#/" target="_blank">
+        <img src="/layout/images/banner-primeblocks.png" alt="Prime Blocks" class="w-full mt-3" />
+      </a>
+    </li>
+  </ul>
+</template>
+
 <script>
 import AppMenuItem from './AppMenuItem.vue';
 export default {
@@ -18,6 +32,10 @@ export default {
             { label: 'Usuários', icon: 'pi pi-fw pi pi-user', to: '/usuarios' },
             { label: 'Equipes', icon: 'pi pi-fw pi-users', to: '/equipes' },
           ]
+        },
+        {
+          label: 'OKR / Resultados Chaves',
+          items: [{ label: 'okr', icon: 'pi pi-fw pi-compass', to: '/okr' }]
         },
         {
           label: 'UI Components',
@@ -178,20 +196,6 @@ export default {
 }
 
 </script>
-
-<template>
-    <ul class="layout-menu">
-    <template v-for="(item, i) in model" :key="item">
-      <app-menu-item v-if="!item.separator" :item="item" :index="i"></app-menu-item>
-            <li v-if="item.separator" class="menu-separator"></li>
-    </template>
-    <li>
-      <a href="https://www.primefaces.org/primeblocks-vue/#/" target="_blank">
-        <img src="/layout/images/banner-primeblocks.png" alt="Prime Blocks" class="w-full mt-3" />
-      </a>
-    </li>
-  </ul>
-</template>
 
 
 

@@ -131,25 +131,29 @@ export default {
       await this.initialMethods();
     },
     async initialMethods() {
-      const { body } = (await UserService.getAllUser('0c749690-345c-4f98-9272-d18557c10386')).data;
+      const { body } = (await UserService.getAllUser(1)).data;
       this.users = body.result.users;
 
-      const { body: bodyTeam } = (await TeamService.getTeams('0c749690-345c-4f98-9272-d18557c10386')).data;
+      const { body: bodyTeam } = (await TeamService.getTeams(1)).data;
       this.teams = bodyTeam.result.teams;
     },
     async saveUserEdited() {
       try {
         const payload = { id: this.user.id, name: this.user.name, email: this.user.email };
         await UserService.edit(payload);
-        const payloadTeamUser = { selectedTeam: this.selectedTeam, userId: this.user.id, companyId: '0c749690-345c-4f98-9272-d18557c10386' };
+        const payloadTeamUser = { selectedTeam: this.selectedTeam, userId: this.user.id, companyId: 1 };
         await TeamUserService.edit(payloadTeamUser);
 
         await this.initialMethods();
         this.userDialog = false;
         this.toast.add({ severity: 'success', detail: 'Usuário editado', life: 3000 });
       } catch (error) {
+        if (error.response.data.status === 409) {
+          this.toast.add({ severity: 'error', summary: 'Conflito', detail: 'Já existe um usuário com esse email', life: 3000 });
+          return;
+        }
         this.toast.add({ severity: 'error', sdetail: 'Error ao editar o usuário', life: 3000 });
-        return 0;
+        return;
       }
     },
     async confirmDeleteUser(user) {
@@ -176,16 +180,20 @@ export default {
           email: this.user.email,
           password: '123456',
           admin: false,
-          idcompany: '0c749690-345c-4f98-9272-d18557c10386'
+          idcompany: 1
         };
         const userCreated = (await UserService.created(payload)).data.body.result;
-        const payloadTeamUser = { selectedTeam: this.selectedTeam, userId: userCreated.id, companyId: '0c749690-345c-4f98-9272-d18557c10386' };
+        const payloadTeamUser = { selectedTeam: this.selectedTeam, userId: userCreated.id, companyId: 1 };
         await TeamUserService.edit(payloadTeamUser);
 
         await this.initialMethods();
         this.userDialog = false;
         this.toast.add({ severity: 'success', detail: 'Usuário criado', life: 3000 });
       } catch (error) {
+        if (error.response.data.status === 409) {
+          this.toast.add({ severity: 'error', summary: 'Conflito', detail: 'Já existe um usuário com esse email', life: 3000 });
+          return;
+        }
         console.log({ error });
         this.toast.add({ severity: 'error', sdetail: 'Error ao cadastrar o usuário', life: 3000 });
       }

@@ -11,8 +11,8 @@ class UserService {
     };
   }
 
-  async getAllUser(idcompany, valeu=1) {
-    return await this.api.get(`/user?page=${valeu}`, { params: { idcompany } });
+  async getAllUser(idcompany) {
+    return await this.api.get(`/user`, { params: { idcompany } });
   }
 
   async created(payload) {
@@ -25,6 +25,10 @@ class UserService {
 
   async delete(id) {
     return await this.api.delete(`/user/${id}`);
+  }
+
+  async getById(id) {
+    return await this.api.get(`/user/${id}`);
   }
 }
 

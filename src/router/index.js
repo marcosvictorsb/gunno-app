@@ -151,6 +151,11 @@ const router = createRouter({
           path: '/equipes',
           name: 'equipes',
           component: () => import('@/views/pages/equipes/equipes.vue')
+        },
+        {
+          path: '/okr',
+          name: 'okr',
+          component: () => import('@/views/pages/okr/okr.vue')
         }
       ]
     },
