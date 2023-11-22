@@ -2,7 +2,7 @@
 import axios from 'axios';
 
 const ApiService = axios.create({
-  baseURL: 'http://localhost:3003',
+  baseURL: 'https://gunno-api.onrender.com/',
 });
 
 export default ApiService;
