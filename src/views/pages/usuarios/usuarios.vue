@@ -142,6 +142,7 @@ export default {
       }
     },
     async hideDialog() {
+      this.submitted = false;
       this.userDialog = false;
       await this.initialMethods();
     },
@@ -178,11 +179,12 @@ export default {
       }
     },
     async confirmDeleteUser(user) {
-      console.log({a: this.confirm});
       this.confirm.require({
         message: 'Tem certeza de que deseja prosseguir com a exclusão?',
         header: 'Confirmação de Exclusão',
         icon: 'pi pi-exclamation-triangle',
+        acceptLabel: 'Sim',
+        rejectLabel: 'Não',
         accept: async () => {
           try {
             await UserService.delete(user.id);
