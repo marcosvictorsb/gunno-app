@@ -1,5 +1,11 @@
 <!-- eslint-disable prettier/prettier -->
 <template>
+  <div>
+    <Loading :is-loading="isLoading"/>
+  </div>
+  <div>
+    <ConfirmDialog></ConfirmDialog>
+  </div>
   <div>    
     <DataTable v-model:editingRows="editingRows" :value="users" paginator :rows="10" :rowsPerPageOptions="[10, 20, 50]" 
     showGridlines editMode="row" dataKey="id" class="p-datatable-sm"
@@ -30,7 +36,7 @@
           </template>
       </Column>
       <Column  header="Ações" :rowEditor="true" style="width: 10%; min-width: 8rem" bodyStyle="text-align:center">
-        <template #body="slotProps">
+        <template #body="slotProps">           
             <Button icon="pi pi-pencil" outlined rounded class="mr-2" @click="editUser(slotProps.data)" />
             <Button icon="pi pi-trash" outlined rounded severity="danger" @click="confirmDeleteUser(slotProps.data)" />
           </template>
@@ -39,17 +45,17 @@
     <Toast />
   </div>
   <div>
-    <Dialog v-model:visible="userDialog" :style="{width: '450px'}" :header="userDialogTitle" :modal="true" class="p-fluid">
+    <Dialog v-model:visible="userDialog" :style="{width: '450px'}" :header="userDialogTitle" :modal="true" class="p-fluid" :closable="false">
       <div class="field">
-          <label for="name">Name</label>
+          <label for="name">Nome</label>
           <InputText id="name" v-model.trim="user.name" required="true" autofocus :class="{'p-invalid': submitted && !user.name}" />
-          <small class="p-error" v-if="submitted && !user.name">Nome is required.</small>
+          <small class="p-error" v-if="submitted && !user.name">Nome é obrigatório</small>
       </div>
 
       <div class="field">
           <label for="email">Email</label>
           <InputText id="email" v-model.trim="user.email" required="true" autofocus :class="{'p-invalid': submitted && !user.email}" />
-          <small class="p-error" v-if="submitted && !user.email">Email é obrigatório.</small>
+          <small class="p-error" v-if="submitted && !user.email">Email é obrigatório</small>
       </div>
 
       <div class="field">
@@ -71,18 +77,23 @@
 import DataTable from 'primevue/datatable';
 import Column from 'primevue/column';
 import Dialog from 'primevue/dialog';
+import ConfirmDialog from 'primevue/confirmdialog';
 import MultiSelect from 'primevue/multiselect';
 import UserService from '../../../service/UserService';
 import TeamService from '../../../service/TeamService';
 import TeamUserService from '../../../service/TeamUserService';
+import Loading from '../../../components/Loading/Loading.vue';
 import { useToast } from 'primevue/usetoast';
+import { useConfirm } from 'primevue/useconfirm';
 
 export default {
   components: {
     DataTable,
     Column,
     Dialog,
-    MultiSelect
+    MultiSelect,
+    Loading,
+    ConfirmDialog
   },
   data() {
     return {
@@ -95,8 +106,9 @@ export default {
       userDialog: false,
       userDialogTitle: '',
       submitted: false,
-      toast: useToast()
-
+      toast: useToast(),
+      confirm: useConfirm(),
+      isLoading: false
     };
   },
   async created() {
@@ -105,8 +117,8 @@ export default {
   methods: {
     async editUser(user) {
       try {
+        this.isLoading = true;
         this.user = user;
-        this.userDialog = true;
         this.userDialogTitle = 'Informações do usuário';
         this.selectedTeam = [];
         this.isEditUser = true;
@@ -122,8 +134,11 @@ export default {
           const result = (await TeamService.getAllTeamsByID(item.teamId)).data.body.result;
           this.selectedTeam.push(result);
         });
+        this.userDialog = true;
+        this.isLoading = false;
       } catch (error) {
         console.log({ error });
+        this.isLoading = false;
       }
     },
     async hideDialog() {
@@ -139,6 +154,10 @@ export default {
     },
     async saveUserEdited() {
       try {
+        this.submitted = true;
+        if (!this.isFormValid()) {
+          return;
+        }
         const payload = { id: this.user.id, name: this.user.name, email: this.user.email };
         await UserService.edit(payload);
         const payloadTeamUser = { selectedTeam: this.selectedTeam, userId: this.user.id, companyId: 1 };
@@ -146,8 +165,10 @@ export default {
 
         await this.initialMethods();
         this.userDialog = false;
+        this.submitted = false;
         this.toast.add({ severity: 'success', detail: 'Usuário editado', life: 3000 });
       } catch (error) {
+        this.submitted = false;
         if (error.response.data.status === 409) {
           this.toast.add({ severity: 'error', summary: 'Conflito', detail: 'Já existe um usuário com esse email', life: 3000 });
           return;
@@ -157,14 +178,25 @@ export default {
       }
     },
     async confirmDeleteUser(user) {
-      try {
-        await UserService.delete(user.id);
-        await this.initialMethods();
-        this.toast.add({ severity: 'success', detail: 'Usuário deletado', life: 3000 });
-      } catch (error) {
-        console.log({ error });
-        this.toast.add({ severity: 'error', sdetail: 'Error ao deletar o usuário', life: 3000 });
-      }
+      console.log({a: this.confirm});
+      this.confirm.require({
+        message: 'Tem certeza de que deseja prosseguir com a exclusão?',
+        header: 'Confirmação de Exclusão',
+        icon: 'pi pi-exclamation-triangle',
+        accept: async () => {
+          try {
+            await UserService.delete(user.id);
+            await this.initialMethods();
+            this.toast.add({ severity: 'info', summary: 'Exclusão Confirmada', detail: 'Você confirmou a exclusão do usuário', life: 3000 });
+          } catch (error) {
+            console.log({ error });
+            this.toast.add({ severity: 'error', sdetail: 'Error ao deletar o usuário', life: 3000 });
+          }
+        },
+        reject: () => {
+          this.toast.add({ severity: 'error', summary: 'Exclusão Cancelada', detail: 'Você cancelou a exclusão do usuário', life: 3000 });
+        }
+      });
     },
     addUser() {
       this.userDialog = true;
@@ -175,6 +207,12 @@ export default {
     },
     async saveUser() {
       try {
+        this.submitted = true;
+
+        if (!this.isFormValid()) {
+          return;
+        }
+
         const payload = {
           name: this.user.name,
           email: this.user.email,
@@ -188,8 +226,10 @@ export default {
 
         await this.initialMethods();
         this.userDialog = false;
+        this.submitted = false;
         this.toast.add({ severity: 'success', detail: 'Usuário criado', life: 3000 });
       } catch (error) {
+        this.submitted = false;
         if (error.response.data.status === 409) {
           this.toast.add({ severity: 'error', summary: 'Conflito', detail: 'Já existe um usuário com esse email', life: 3000 });
           return;
@@ -197,6 +237,13 @@ export default {
         console.log({ error });
         this.toast.add({ severity: 'error', sdetail: 'Error ao cadastrar o usuário', life: 3000 });
       }
+    },
+    isFormValid() {
+      if (!this.user.name || !this.user.email) {
+        return false;
+      }
+
+      return true;
     }
   }
 };
