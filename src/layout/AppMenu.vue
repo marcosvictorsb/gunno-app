@@ -17,14 +17,14 @@
 import AppMenuItem from './AppMenuItem.vue';
 export default {
   components: {
-        AppMenuItem
+    AppMenuItem
   },
   data() {
     return {
       model: [
         {
           label: 'Home',
-          items: [{ label: 'Dashboard', icon: 'pi pi-fw pi-home', to: '/' }]
+          items: [{ label: 'Dashboard', icon: 'pi pi-fw pi-home', to: '/dashboard' }]
         },
         {
           label: 'FUNÇÕES',

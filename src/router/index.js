@@ -3,13 +3,14 @@ import AppLayout from '@/layout/AppLayout.vue';
 
 const router = createRouter({
   history: createWebHashHistory(),
+  mode: 'hash',
   routes: [
     {
       path: '/',
       component: AppLayout,
       children: [
         {
-          path: '/',
+          path: '/dashboard',
           name: 'dashboard',
           component: () => import('@/views/Dashboard.vue')
         },
