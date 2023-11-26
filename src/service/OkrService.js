@@ -23,9 +23,9 @@ class OkrService {
 //     return await this.api.put(`/user`, payload);
 //   }
 
-//   async delete(id) {
-//     return await this.api.delete(`/user/${id}`);
-//   }
+  async delete(id) {
+    return await this.api.delete(`/objectives/${id}`);
+  }
 }
 
 export default new OkrService();

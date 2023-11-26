@@ -15,9 +15,13 @@ class ResultKeyService {
     return await this.api.post('/result-key', payload);
   }
 
-//   async edit(payload) {
-//     return await this.api.put(`/user`, payload);
-//   }
+  async edit(idResultKey, payload) {
+    return await this.api.put(`/result-key/${idResultKey}`, payload);
+  }
+
+  async delete(id) {
+    return await this.api.delete(`/result-key/${id}`);
+  }
 
 //   async delete(id) {
 //     return await this.api.delete(`/user/${id}`);
