@@ -7,6 +7,16 @@ const router = createRouter({
   routes: [
     {
       path: '/',
+      name: 'landing',
+      component: () => import('@/views/pages/landing/landing.vue')
+    },
+    {
+      path: '/login',
+      name: 'login',
+      component: () => import('@/views/pages/login/login.vue')
+    },
+    {
+      path: '/',
       component: AppLayout,
       children: [
         {
@@ -161,8 +171,8 @@ const router = createRouter({
       ]
     },
     {
-      path: '/landing',
-      name: 'landing',
+      path: '/landing1',
+      name: 'landing1',
       component: () => import('@/views/pages/Landing.vue')
     },
     {
@@ -171,11 +181,11 @@ const router = createRouter({
       component: () => import('@/views/pages/NotFound.vue')
     },
 
-    {
-      path: '/auth/login',
-      name: 'login',
-      component: () => import('@/views/pages/auth/Login.vue')
-    },
+    // {
+    //   path: '/auth/login',
+    //   name: 'login',
+    //   component: () => import('@/views/pages/auth/Login.vue')
+    // },
     {
       path: '/auth/access',
       name: 'accessDenied',
