@@ -12,7 +12,7 @@
             <!-- <span class="text-600 font-medium">Sign in to continue</span> -->
           </div>
 
-          <div>
+          <form>
             <label for="email1" class="block text-900 text-xl font-medium mb-2">Email</label>
             <InputText id="email1" type="text" placeholder="Email" class="w-full md:w-30rem mb-5" style="padding: 1rem" v-model="email" />
 
@@ -27,7 +27,7 @@
               <!-- <a class="font-medium no-underline ml-2 text-right cursor-pointer" style="color: var(--primary-color)">Esqueceu a senha?</a> -->
             </div>
             <Button label="Entrar" class="w-full p-3 text-xl" @click="auth"></Button>
-          </div>
+          </form>
         </div>
       </div>
     </div>
@@ -51,13 +51,17 @@ export default {
       toast: useToast()
     };
   },
+  created() {
+    console.log();
+  },
   methods: {
     async auth() {
       try {
         const { status, body } = (await AuthService.auth(this.email, this.password)).data;
         const user = body.result;
         if (status === 200) {
-          localStorage.setItem('user-data', JSON.stringify(user));
+          user.isAuthenticated = true;
+          this.$store.commit('setUser', user);
           this.$router.push({ name: 'dashboard' });
         }
       } catch (error) {

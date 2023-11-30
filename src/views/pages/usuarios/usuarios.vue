@@ -108,7 +108,8 @@ export default {
       submitted: false,
       toast: useToast(),
       confirm: useConfirm(),
-      isLoading: false
+      isLoading: false,
+      idcompany: null
     };
   },
   async created() {
@@ -147,10 +148,12 @@ export default {
       await this.initialMethods();
     },
     async initialMethods() {
-      const { body } = (await UserService.getAllUser(1)).data;
+      const userStore = this.$store.state.user;
+      this.idcompany = userStore.idcompany;
+      const { body } = (await UserService.getAllUser(this.idcompany)).data;
       this.users = body.result.users;
 
-      const { body: bodyTeam } = (await TeamService.getTeams(1)).data;
+      const { body: bodyTeam } = (await TeamService.getTeams(this.idcompany)).data;
       this.teams = bodyTeam.result.teams;
     },
     async saveUserEdited() {
@@ -161,7 +164,7 @@ export default {
         }
         const payload = { id: this.user.id, name: this.user.name, email: this.user.email };
         await UserService.edit(payload);
-        const payloadTeamUser = { selectedTeam: this.selectedTeam, userId: this.user.id, companyId: 1 };
+        const payloadTeamUser = { selectedTeam: this.selectedTeam, userId: this.user.id, companyId: this.idcompany };
         await TeamUserService.edit(payloadTeamUser);
 
         await this.initialMethods();
@@ -220,10 +223,10 @@ export default {
           email: this.user.email,
           password: '123456',
           admin: false,
-          idcompany: 1
+          idcompany: this.idcompany
         };
         const userCreated = (await UserService.created(payload)).data.body.result;
-        const payloadTeamUser = { selectedTeam: this.selectedTeam, userId: userCreated.id, companyId: 1 };
+        const payloadTeamUser = { selectedTeam: this.selectedTeam, userId: userCreated.id, companyId: this.idcompany };
         await TeamUserService.edit(payloadTeamUser);
 
         await this.initialMethods();

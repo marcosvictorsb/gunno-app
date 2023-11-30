@@ -86,6 +86,7 @@ export default {
       submitted: false,
       toast: useToast(),
       confirm: useConfirm(),
+      idcompany: null
     };
   },
   async created() {
@@ -105,8 +106,9 @@ export default {
     },
     async initialMethods() {
       try {
-        const idcompany = 1;
-        const { body } = (await TeamService.getTeams(idcompany)).data;
+        const userStore = this.$store.state.user;
+        this.idcompany = userStore.idcompany;
+        const { body } = (await TeamService.getTeams(this.idcompany)).data;
         this.teams = body.result.teams;
       } catch (error) {
         console.log(error);
@@ -163,8 +165,7 @@ export default {
         this.submitted = true;
         if (!this.isFormValid()) return;
 
-        const idcompany = 1;
-        await TeamService.created(this.team.name, idcompany);
+        await TeamService.created(this.team.name, this.idcompany);
         await this.initialMethods();
         this.teamDialog = false;
         this.submitted = false;

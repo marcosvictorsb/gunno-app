@@ -170,7 +170,6 @@ export default {
       resultkey: {},
       resultkeyDialog: false,
       submitted: false,
-      idcompany: 1,
       toast: useToast(),
       editingRows: [],
       selectedUser: [],
@@ -181,7 +180,8 @@ export default {
       isEditResultKey: false,
       valueProgress: 0,
       resultObjectives: null,
-      confirm: useConfirm()
+      confirm: useConfirm(),
+      idcompany: null,
     };
   },
   async created() {
@@ -213,6 +213,8 @@ export default {
     },
     async initialMethods() {
       try {
+        const userStore = this.$store.state.user;
+        this.idcompany = userStore.idcompany;
         const quarter = getCurrentQuarter();
         const { data } = await OkrService.getObjectiveByQuarter(quarter, this.idcompany);
         this.resultObjectives = data.result;
@@ -289,7 +291,7 @@ export default {
       this.selectedUser = this.user[0];
       this.loading = false;
     },
-    async deleteOKR(ijOkr) {
+    async deleteOKR(idOkr) {
       this.confirm.require({
         message: 'Todos os resultados chaves serão deletados. Tem certeza de que deseja prosseguir com a exclusão?',
         header: 'Confirmação de Exclusão',
@@ -298,7 +300,7 @@ export default {
         rejectLabel: 'Não',
         accept: async () => {
           try {
-            await OkrService.delete(ijOkr);
+            await OkrService.delete(idOkr);
             await this.initialMethods();
             this.toast.add({ severity: 'info', summary: 'Exclusão Confirmada', detail: 'Você confirmou a exclusão da okr e seus resultados chaves', life: 3000 });
           } catch (error) {

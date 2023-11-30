@@ -1,5 +1,6 @@
 import { createRouter, createWebHashHistory } from 'vue-router';
 import AppLayout from '@/layout/AppLayout.vue';
+import authGuard from '../service/AuthGuard';
 
 const router = createRouter({
   history: createWebHashHistory(),
@@ -22,7 +23,8 @@ const router = createRouter({
         {
           path: '/dashboard',
           name: 'dashboard',
-          component: () => import('@/views/Dashboard.vue')
+          component: () => import('@/views/Dashboard.vue'),
+          beforeEnter: authGuard
         },
         {
           path: '/uikit/formlayout',
@@ -156,17 +158,20 @@ const router = createRouter({
         {
           path: '/usuarios',
           name: 'usuarios',
-          component: () => import('@/views/pages/usuarios/usuarios.vue')
+          component: () => import('@/views/pages/usuarios/usuarios.vue'),
+          beforeEnter: authGuard
         },
         {
           path: '/equipes',
           name: 'equipes',
-          component: () => import('@/views/pages/equipes/equipes.vue')
+          component: () => import('@/views/pages/equipes/equipes.vue'),
+          beforeEnter: authGuard
         },
         {
           path: '/okr',
           name: 'okr',
-          component: () => import('@/views/pages/okr/okr.vue')
+          component: () => import('@/views/pages/okr/okr.vue'),
+          beforeEnter: authGuard
         }
       ]
     },
