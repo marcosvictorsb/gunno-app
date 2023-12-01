@@ -105,27 +105,28 @@
       
       <div class="field">
         <label for="valorInicial">Valor Inicial</label>
-        <InputNumber id="valorInicial" v-model.trim="resultkey.initialValue" required="true" autofocus :class="{'p-invalid': submitted && !resultkey.initialValue}" />
+        <InputNumber id="valorInicial" v-model="resultkey.initialValue" required="true" autofocus :class="{'p-invalid': submitted && resultkey.initialValue < 0}" />
         <small class="p-error" v-if="submitted && !resultkey.initialValue">Valor inicial é obrigatório</small>
       </div>
 
       <div class="field">
         <label for="valorAlvo">Valor Alvo</label>
-        <InputNumber id="valorAlvo" v-model.trim="resultkey.valueTarget" required="true" autofocus :class="{'p-invalid': submitted && !resultkey.valueTarget}" />
+        <InputNumber id="valorAlvo" v-model="resultkey.valueTarget" required="true" autofocus :class="{'p-invalid': submitted && resultkey.valueTarget < 0}" />
         <small class="p-error" v-if="submitted && !resultkey.valueTarget">Valor alvo é obrigatório</small>
       </div>
 
       <div class="field">
         <label for="valorAtual">Valor Atual</label>
-        <InputNumber id="valorAtual" v-model.trim="resultkey.valueCurrent" required="true" autofocus :class="{'p-invalid': submitted && !resultkey.valueCurrent}" />
+        <InputNumber id="valorAtual" v-model="resultkey.valueCurrent" required="true" autofocus :class="{'p-invalid': submitted && resultkey.valueCurrent < 0}" />
         <small class="p-error" v-if="submitted && !resultkey.valueCurrent">Valor atual é obrigatório</small>
         <small class="p-error" v-if="resultkey.valueCurrent > resultkey.valueTarget">Valor Atual não pode ser maior que o Valor Alvo</small>
       </div>
 
       <div class="field">
         <label for="equipe">Responsável</label>
-        <Dropdown v-model="selectedUser" :options="users" filter optionLabel="name" placeholder="Selecione um responsavel" class="w-full md" required="true" autofocus :class="{'p-invalid': submitted && !selectedUser.length}"/>
-        <small class="p-error" v-if="submitted && !selectedUser.length">Responsável é obrigatório</small>
+        <Dropdown v-model="selectedUser" :options="users" filter optionLabel="name" placeholder="Selecione um responsavel" class="w-full md" required="true" autofocus :class="{'p-invalid': submitted && Object.keys(selectedUser).length === 0}"/>
+        <small class="p-error" v-if="submitted && Object.keys(selectedUser).length === 0">Responsável é obrigatório</small>
+        {{ console.log(Object.keys(selectedUser).length === 0) }}
       </div>
 
       <template #footer>
@@ -172,7 +173,7 @@ export default {
       submitted: false,
       toast: useToast(),
       editingRows: [],
-      selectedUser: [],
+      selectedUser: {},
       users: [],
       user: [],
       idObjectives: null,
@@ -247,8 +248,9 @@ export default {
     },
     async addResultKey(idObjectives) {
       this.resultkey = [];
-      this.selectedUser = [];
+      this.selectedUser = {};
       this.isEditResultKey = false;
+      this.submitted = false;
       this.idObjectives = idObjectives;
       this.resultkeyDialog = true;
       const { body } = (await UserService.getAllUser(this.idcompany)).data;
@@ -355,6 +357,11 @@ export default {
     },
     isFormValid(payload) {
       return payload && payload.companyId && payload.initialValue && payload.name && payload.objectiveId && payload.userId && payload.valueCurrent && payload.valueTarget;
+    },
+    isInitialValueValid(initialValue) {
+      const isValid = initialValue && initialValue >= 0;
+      console.log({isValid})
+      return isValid && this.submitted;
     }
   }
 };

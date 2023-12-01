@@ -1,46 +1,36 @@
-/* eslint-disable no-return-await */
 import ApiService from './ApiService';
 import store from '../store';
 
 class UserService {
   constructor() {
     this.api = ApiService;
-  }
-
-  async getAllUser(idcompany) {
-    // const data = { params: { idcompany } };
-    // const config = {
-    //   headers: {
-    //     'Content-Type': 'application/json',
-    //     Authorization: `Bearer ${store.state.user.token}`
-    //   }
-    // };
-
-    const options = {
-      params: { idcompany },
+    this.config = {
       headers: {
         'Content-Type': 'application/json',
         Authorization: `Bearer ${store.state.user.token}`
       }
     };
+  }
 
-    return await this.api.get('/user', options);
+  async getAllUser(idcompany) {
+    this.config.params = { idcompany };
+    return await this.api.get(`/user`, this.config);
   }
 
   async created(payload) {
-    return await this.api.post('/user', payload);
+    return await this.api.post('/user', payload, this.config);
   }
 
   async edit(payload) {
-    return await this.api.put(`/user`, payload);
+    return await this.api.put(`/user`, payload, this.config);
   }
 
   async delete(id) {
-    return await this.api.delete(`/user/${id}`);
+    return await this.api.delete(`/user/${id}`, this.config);
   }
 
   async getById(id) {
-    return await this.api.get(`/user/${id}`);
+    return await this.api.get(`/user/${id}`, this.config);
   }
 }
 
