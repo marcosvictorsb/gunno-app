@@ -106,19 +106,19 @@
       <div class="field">
         <label for="valorInicial">Valor Inicial</label>
         <InputNumber id="valorInicial" v-model="resultkey.initialValue" required="true" autofocus :class="{'p-invalid': submitted && resultkey.initialValue < 0}" />
-        <small class="p-error" v-if="submitted && !resultkey.initialValue">Valor inicial é obrigatório</small>
+        <small class="p-error" v-if="submitted && resultkey.initialValue < 0">Valor inicial é obrigatório</small>
       </div>
 
       <div class="field">
         <label for="valorAlvo">Valor Alvo</label>
         <InputNumber id="valorAlvo" v-model="resultkey.valueTarget" required="true" autofocus :class="{'p-invalid': submitted && resultkey.valueTarget < 0}" />
-        <small class="p-error" v-if="submitted && !resultkey.valueTarget">Valor alvo é obrigatório</small>
+        <small class="p-error" v-if="submitted && resultkey.valueTarget < 0">Valor alvo é obrigatório</small>
       </div>
 
       <div class="field">
         <label for="valorAtual">Valor Atual</label>
         <InputNumber id="valorAtual" v-model="resultkey.valueCurrent" required="true" autofocus :class="{'p-invalid': submitted && resultkey.valueCurrent < 0}" />
-        <small class="p-error" v-if="submitted && !resultkey.valueCurrent">Valor atual é obrigatório</small>
+        <small class="p-error" v-if="submitted && resultkey.valueCurrent < 0">Valor atual é obrigatório</small>
         <small class="p-error" v-if="resultkey.valueCurrent > resultkey.valueTarget">Valor Atual não pode ser maior que o Valor Alvo</small>
       </div>
 
@@ -126,7 +126,6 @@
         <label for="equipe">Responsável</label>
         <Dropdown v-model="selectedUser" :options="users" filter optionLabel="name" placeholder="Selecione um responsavel" class="w-full md" required="true" autofocus :class="{'p-invalid': submitted && Object.keys(selectedUser).length === 0}"/>
         <small class="p-error" v-if="submitted && Object.keys(selectedUser).length === 0">Responsável é obrigatório</small>
-        {{ console.log(Object.keys(selectedUser).length === 0) }}
       </div>
 
       <template #footer>
@@ -265,7 +264,6 @@ export default {
           userId: this.selectedUser.id,
           companyId: this.idcompany
         };
-        console.log(this.selectedUser);
         if (!this.isFormValid(payload)) return;
         const { body, result } = await (await ResultKeyService.created(payload)).data;
         await this.initialMethods();
@@ -356,11 +354,10 @@ export default {
       });
     },
     isFormValid(payload) {
-      return payload && payload.companyId && payload.initialValue && payload.name && payload.objectiveId && payload.userId && payload.valueCurrent && payload.valueTarget;
+      return payload && payload.companyId && payload.initialValue >= 0 && payload.name && payload.objectiveId && payload.userId && payload.valueCurrent >= 0 && payload.valueTarget >= 0;
     },
     isInitialValueValid(initialValue) {
       const isValid = initialValue && initialValue >= 0;
-      console.log({isValid})
       return isValid && this.submitted;
     }
   }
