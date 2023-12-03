@@ -6,6 +6,13 @@
   <div class="flex justify-content-end mb-3">
     <Button label="Criar OKR" severity="info" @click="addOKR" />
   </div>
+  
+  <Fieldset :legend="legend" v-if="okrs.length">
+    <p class="m-0">
+      Neste trimestre, não foram cadastrados ainda Objetivos e Resultados-Chave (OKRs) no sistema. 
+    </p>
+  </Fieldset>
+
   <div v-for="(okr, index) in okrs" :key="index" class="mb-5">
     <DataTable v-model:editingRows="editingRows" :value="okr.resultKeys"  
     showGridlines editMode="row" dataKey="id" class="p-datatable-sm"
@@ -144,6 +151,7 @@ import Dialog from 'primevue/dialog';
 import ProgressBar from 'primevue/progressbar';
 import ConfirmDialog from 'primevue/confirmdialog';
 import Divider from 'primevue/divider';
+import Fieldset from 'primevue/fieldset';
 
 import OkrService from '../../../service/OkrService';
 import UserService from '../../../service/UserService';
@@ -159,7 +167,8 @@ export default {
     Dialog,
     ProgressBar,
     ConfirmDialog,
-    Divider
+    Divider,
+    Fieldset
   },
   data() {
     return {
@@ -182,6 +191,7 @@ export default {
       resultObjectives: null,
       confirm: useConfirm(),
       idcompany: null,
+      legend: `No quarter atual não temos okr cadastradas ainda`
     };
   },
   async created() {
@@ -222,6 +232,9 @@ export default {
         // Mapear e adicionar a propriedade progressValue
         this.okrs = this.mapperProgressValue(this.resultObjectives);
       } catch (error) {
+        if (error.response.status === 404) {
+          return (this.okrs = []);
+        }
         console.log(error);
       }
     },
