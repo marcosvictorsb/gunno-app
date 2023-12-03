@@ -14,18 +14,24 @@
     </button>
 
     <div class="layout-topbar-menu" :class="topbarMenuClasses">
-      <button @click="onTopBarMenuButton()" class="p-link layout-topbar-button">
-        <i class="pi pi-calendar"></i>
-        <span>Calendar</span>
+      <button @click="toggleTheme()" class="p-link layout-topbar-button" v-if="!isDarkThemeSetting">
+        <i class="pi pi-sun"></i>
+        <span>Tema claro</span>
       </button>
+
+      <button @click="toggleTheme()" class="p-link layout-topbar-button" v-if="isDarkThemeSetting">
+        <i class="pi pi-moon"></i>
+        <span>Tema escuro</span>
+      </button>
+
       <button @click="onTopBarMenuButton()" class="p-link layout-topbar-button">
         <i class="pi pi-user"></i>
         <span>Profile</span>
       </button>
-      <button @click="onSettingsClick()" class="p-link layout-topbar-button">
+      <!-- <button @click="onSettingsClick()" class="p-link layout-topbar-button">
         <i class="pi pi-cog"></i>
         <span>Settings</span>
-      </button>
+      </button> -->
     </div>
   </div>
 </template>
@@ -43,7 +49,8 @@ export default {
     return {
       outsideClickListener: null,
       topbarMenuActive: false,
-      onMenuToggle: onMenuToggle
+      onMenuToggle: onMenuToggle,
+      isDarkThemeSetting: null
     };
   },
   computed: {
@@ -55,6 +62,10 @@ export default {
         'layout-topbar-menu-mobile-active': this.topbarMenuActive
       };
     }
+  },
+  created() {
+    this.loadingTheme();
+    this.isDarkThemeSetting = this.isDarkTheme();
   },
   methods: {
     onTopBarMenuButton() {
@@ -74,7 +85,7 @@ export default {
         document.addEventListener('click', this.outsideClickListener);
       }
     },
-    unbindOutsideClickListener () {
+    unbindOutsideClickListener() {
       if (this.outsideClickListener) {
         document.removeEventListener('click', this.outsideClickListener);
         this.outsideClickListener = null;
@@ -87,6 +98,32 @@ export default {
       const topbarEl = document.querySelector('.layout-topbar-menu-button');
 
       return !(sidebarEl.isSameNode(event.target) || sidebarEl.contains(event.target) || topbarEl.isSameNode(event.target) || topbarEl.contains(event.target));
+    },
+    toggleTheme() {
+      const themeLink = document.getElementById('theme-css');
+      if (themeLink) {
+        const currentTheme = themeLink.getAttribute('href');
+        const newTheme = currentTheme.includes('light') ? 'dark' : 'light';
+        this.saveNewThemeInLocalStorage(newTheme);
+
+        themeLink.setAttribute('href', `/themes/lara-${newTheme}-teal/theme.css`);
+      }
+      this.isDarkThemeSetting = this.isDarkTheme();
+    },
+    saveNewThemeInLocalStorage(theme) {
+      localStorage.setItem('theme', theme);
+    },
+    loadingTheme() {
+      const theme = localStorage.getItem('theme');
+      const themeLink = document.getElementById('theme-css');
+      this.isDarkThemeSetting = this.isDarkTheme();
+      if (theme !== null && themeLink) {
+        themeLink.setAttribute('href', `/themes/lara-${theme}-teal/theme.css`);
+      }
+    },
+    isDarkTheme() {
+      const themeSaveInLocalStorege = localStorage.getItem('theme');
+      return themeSaveInLocalStorege === 'dark' ? true : false;
     }
   },
   mounted() {
