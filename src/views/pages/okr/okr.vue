@@ -36,13 +36,13 @@
     </template>
     <template #empty> Sem registros disponíveis para exibição </template>
 
-      <Column field="name" header="Nome" style="width: 20%">
+      <Column field="name" header="Resultados chaves" style="width: 35%">
           <template #editor="{ data, field }">
               <InputText v-model="data[field]" />
           </template>
       </Column>
 
-      <Column field="progressValue" header="Progresso" style="width: 20%" class="progresso">
+      <Column field="progressValue" header="Progresso" style="width: 15%" class="progresso">
         <template #body="{ data, field }">
             <ProgressBar :value=" data[field] === 0 ? 1 : data[field]" :showValue="false" style="height: 6px"></ProgressBar>
             <Divider align="center" type="dotted">
@@ -51,25 +51,25 @@
         </template>
       </Column>
 
-      <Column field="initialValue" header="Valor Inicial" style="width: 20%">
+      <Column field="initialValue" header="Valor Inicial" style="width: 10%">
           <template #editor="{ data, field }">
               <InputNumber v-model="data[field]" />
           </template>
       </Column>
 
-      <Column field="valueTarget" header="Valor Alvo" style="width: 20%">
+      <Column field="valueTarget" header="Valor Alvo" style="width: 10%">
           <template #editor="{ data, field }">
               s
           </template>
       </Column>
 
-      <Column field="valueCurrent" header="Valor Atual" style="width: 20%">
+      <Column field="valueCurrent" header="Valor Atual" style="width: 10%">
           <template #editor="{ data, field }">
               <InputText v-model="data[field]" />
           </template>
       </Column>
 
-      <Column field="assign" header="Responsável" style="width: 20%">
+      <Column field="assign" header="Responsável" style="width: 10%">
           <template #editor="{ data, field }">
               <InputText v-model="data[field]" />
           </template>
