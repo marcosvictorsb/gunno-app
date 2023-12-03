@@ -62,7 +62,7 @@
           </template>
       </Column>
 
-      <Column field="userId" header="Responsável" style="width: 20%">
+      <Column field="assign" header="Responsável" style="width: 20%">
           <template #editor="{ data, field }">
               <InputText v-model="data[field]" />
           </template>
@@ -206,6 +206,7 @@ export default {
         const payload = { name: this.okrName, idcompany: this.idcompany };
         const result = await OkrService.created(payload);
         this.toast.add({ severity: 'success', detail: 'Objetivo criado', life: 3000 });
+        this.okrDialog = false;
         await this.initialMethods();
       } catch (error) {
         console.log(error);
@@ -219,7 +220,6 @@ export default {
         const quarter = getCurrentQuarter();
         const { data } = await OkrService.getObjectiveByQuarter(quarter, this.idcompany);
         this.resultObjectives = data.result;
-
         // Mapear e adicionar a propriedade progressValue
         this.okrs = this.mapperProgressValue(this.resultObjectives);
       } catch (error) {
