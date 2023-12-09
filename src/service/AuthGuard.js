@@ -1,11 +1,10 @@
 import store from '../store';
 
 const authGuard = (to, from, next) => {
-  if (store.state.user.isAuthenticated) {
+  if (store.getters.isAuthenticated) {
     next();
   } else {
-    next('login');
+    next('/login');
   }
 };
-
 export default authGuard;

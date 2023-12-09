@@ -3,11 +3,11 @@
   <div>
     <ConfirmDialog/>
   </div>
-  <div class="flex justify-content-end mb-3">
-    <Button label="Criar OKR" severity="info" @click="addOKR" />
+  <div class="flex justify-content-end mb-3">    
+    <Button label="Criar OKR" severity="info" @click="addOKR" />    
   </div>
   
-  <Fieldset :legend="legend" v-if="okrs.length">
+  <Fieldset :legend="legend" v-if="!okrs.length">    
     <p class="m-0">
       Neste trimestre, não foram cadastrados ainda Objetivos e Resultados-Chave (OKRs) no sistema. 
     </p>
@@ -229,7 +229,6 @@ export default {
         const quarter = getCurrentQuarter();
         const { data } = await OkrService.getObjectiveByQuarter(quarter, this.idcompany);
         this.resultObjectives = data.result;
-        // Mapear e adicionar a propriedade progressValue
         this.okrs = this.mapperProgressValue(this.resultObjectives);
       } catch (error) {
         if (error.response.status === 404) {

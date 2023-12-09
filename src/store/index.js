@@ -1,29 +1,28 @@
 import { createStore } from 'vuex';
 
 export default createStore({
-  // estados existente no projeto
   state: {
-    user: {
-      admin: false,
-      email: '',
-      uuid: '',
-      id: '',
-      idcompany: '',
-      name: '',
-      token: '',
-      isAuthenticated: false
-    }
+    user: JSON.parse(localStorage.getItem('user')) || { token: null }
   },
   mutations: {
-    // alterar os estatos acimas
     setUser(state, user) {
       state.user = user;
+      localStorage.setItem('user', JSON.stringify(user));
+      const channel = new BroadcastChannel('auth');
+      channel.postMessage('login');
+    },
+    logout(state) {
+      state.user = null;
+      localStorage.removeItem('user');
+
+      const channel = new BroadcastChannel('auth');
+      channel.postMessage('logout');
     }
   },
   actions: {},
   getters: {
-    isAuthenticated() {
-      return this.state.user.isAuthenticated;
+    isAuthenticated: (state) => {
+      return !!state.user.token;
     }
   }
 });

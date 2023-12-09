@@ -60,7 +60,6 @@ export default {
         const { status, body } = (await AuthService.auth(this.email, this.password)).data;
         const user = body.result;
         if (status === 200) {
-          user.isAuthenticated = true;
           this.$store.commit('setUser', user);
           this.$router.push({ name: 'dashboard' });
         }

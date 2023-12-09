@@ -22,6 +22,8 @@
       </div>
     </template>
 
+    <template #empty> Sem registros disponíveis para exibição </template>
+
     <Column field="name" header="Nome" style="width: 20%">
       <template #editor="{ data, field }">
         <InputText v-model="data[field]" />
