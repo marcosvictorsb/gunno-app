@@ -7,7 +7,7 @@
     <Button label="Criar OKR" severity="info" @click="addOKR" />    
   </div>
   
-  <Fieldset :legend="legend" v-if="!okrs.length">    
+  <Fieldset :legend="legend" v-if="!resultObjectives">    
     <p class="m-0">
       Neste trimestre, não foram cadastrados ainda Objetivos e Resultados-Chave (OKRs) no sistema. 
     </p>
