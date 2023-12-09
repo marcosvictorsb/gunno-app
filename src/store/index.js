@@ -17,6 +17,7 @@ export default createStore({
 
       const channel = new BroadcastChannel('auth');
       channel.postMessage('logout');
+      window.location.href = '/login';
     }
   },
   actions: {},

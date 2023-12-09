@@ -391,7 +391,6 @@ export default {
       });
     },
     gotoLogin() {
-      console.log('Chegou aqui');
       this.$router.push('/login');
     }
   },
