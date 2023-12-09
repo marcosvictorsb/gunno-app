@@ -27,6 +27,11 @@ const router = createRouter({
           beforeEnter: authGuard
         },
         {
+          path: '/planejamento',
+          name: 'planejamento',
+          component: () => import('@/views/pages/planejamento/planejamento.vue')
+        },
+        {
           path: '/usuarios',
           name: 'usuarios',
           component: () => import('@/views/pages/usuarios/usuarios.vue'),
@@ -43,7 +48,7 @@ const router = createRouter({
           name: 'okr',
           component: () => import('@/views/pages/okr/okr.vue'),
           beforeEnter: authGuard
-        },
+        },        
         {
           path: '/logout',
           name: 'logout',

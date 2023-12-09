@@ -21,6 +21,7 @@ export default {
           label: 'Menu',
           items: [
             { label: 'Dashboard', icon: 'pi pi-fw pi-home', to: '/dashboard' },
+            { label: 'Planejamento', icon: 'pi pi-fw pi-id-card', to: '/planejamento' },
             { label: 'Usuários', icon: 'pi pi-fw pi pi-user', to: '/usuarios' },
             { label: 'Equipes', icon: 'pi pi-fw pi-users', to: '/equipes' },
             { label: 'OKR', icon: 'pi pi-fw pi-compass', to: '/okr' },
