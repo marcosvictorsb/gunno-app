@@ -21,9 +21,13 @@ class PlannerService {
     return await this.api.post('/planner', params, this.config);
   }
 
-//   async edit(payload) {
-//     return await this.api.put(`/teamuser`, payload, this.config);
-//   }
+  async edit(payload) {
+    return await this.api.put(`/planner/${payload.id}`, payload, this.config);
+  }
+
+  async delete(id) {
+    return await this.api.delete(`/planner/${id}`, this.config);
+  }
 }
 
 export default new PlannerService();

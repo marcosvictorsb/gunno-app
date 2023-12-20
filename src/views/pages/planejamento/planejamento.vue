@@ -14,13 +14,13 @@
 
     <div class="field">
       <label for="email">Descrição</label>
-      <Textarea id="value" v-model="plannerDescription" :class="{ 'p-invalid': errorMessage }" rows="4" cols="30" aria-describedby="text-error" />
+      <Textarea id="value" v-model="plannerDescription" :class="{ 'p-invalid': submitted && !plannerDescription }" rows="4" cols="30" aria-describedby="text-error" />
       <small class="p-error" v-if="submitted && !plannerDescription">Descrição é obrigatório</small>
     </div>
     <template #footer>
       <Button label="Cancelar" icon="pi pi-times" text @click="hideDialog" />
-      <Button label="Editar" icon="pi pi-check" text @click="edit" v-if="isEditUser" />
-      <Button label="Salvar" icon="pi pi-check" text @click="savePlanner" v-if="!isEditUser" />
+      <Button label="Editar" icon="pi pi-check" text @click="editPlanner" v-if="isEditPlanner" />
+      <Button label="Salvar" icon="pi pi-check" text @click="savePlanner" v-if="!isEditPlanner" />
     </template>
   </Dialog>
 
@@ -36,7 +36,14 @@
           <button class="p-panel-header-icon p-link mr-2" @click="toggle($event, index)">
             <span class="pi pi-cog"></span>
           </button>
-          <Menu ref="menuPlanner" id="config_menu" :model="items" popup />
+          <Menu ref="menuPlanner" id="config_menu" :model="items" popup>
+            <template #item="{ item, props }">
+              <a v-ripple :href="item.url" :target="item.target" v-bind="props.action" @click="action(planner)">
+                <span :class="item.icon" />
+                <span class="ml-2">{{ item.label }}</span>
+              </a>
+            </template>
+          </Menu>
         </template>
         <p class="m-0">
           {{ planner.description }}
@@ -76,24 +83,29 @@ export default {
       toast: useToast(),
       confirm: useConfirm(),
       planners: [],
+      PlannerToAction: null,
       items: [
         {
-          label: 'Refresh',
-          icon: 'pi pi-refresh'
-        },
-        {
-          label: 'Search',
-          icon: 'pi pi-search'
+          label: 'Editar',
+          icon: 'pi pi-pencil',
+          command: () => {
+            this.editarPlanner();
+          }
         },
         {
           separator: true
         },
         {
-          label: 'Delete',
-          icon: 'pi pi-times'
+          label: 'Deletar',
+          icon: 'pi pi-times',
+          command: () => {
+            this.deletePlanner();
+          }
         }
       ],
-      menus: []
+      menus: [],
+      isEditPlanner: false,
+      submitted: false
     };
   },
   created() {
@@ -110,7 +122,6 @@ export default {
           this.menus.push(menuRef);
         }
       });
-      console.log('Menus:', this.menus);
     });
   },
   methods: {
@@ -121,12 +132,20 @@ export default {
     addPlanner() {
       this.resetIntputs();
       this.plannerDialog = true;
+      this.isEditPlanner = false;
     },
     hideDialog() {
       this.resetIntputs();
       this.plannerDialog = false;
+      this.submitted = false;
     },
     async savePlanner() {
+      this.submitted = true;
+
+      if (!this.isFormValid()) {
+        return;
+      }
+
       const userStore = this.$store.state.user;
       const idcompany = userStore.idcompany;
       const planner = {
@@ -140,12 +159,14 @@ export default {
         this.hideDialog();
         this.toast.add({ severity: 'success', summary: 'Sucesso', detail: 'Planejamento cadastrado com sucesso!' });
       }
+      this.submitted = false;
+      this.initialMethods();
     },
     async getPlannerCurrentYear() {
       const userStore = this.$store.state.user;
       const idcompany = userStore.idcompany;
       const currentYear = new Date().getFullYear();
-      const { status, body } = (await PlannerService.getPlannerCurrentYear(currentYear, idcompany)).data;
+      const { body } = (await PlannerService.getPlannerCurrentYear(currentYear, idcompany)).data;
       this.planners = body.result;
     },
     async initialMethods() {
@@ -158,6 +179,52 @@ export default {
       } else {
         console.error(`Menu reference not found for index ${index}`);
       }
+    },
+    action(plannerToAction) {
+      this.PlannerToAction = plannerToAction;
+    },
+    editarPlanner() {
+      this.plannerDialog = true;
+      this.plannerTitle = this.PlannerToAction.title;
+      this.plannerDescription = this.PlannerToAction.description;
+
+      this.isEditPlanner = true;
+    },
+    async editPlanner() {
+      try {
+        this.submitted = true;
+        const payload = {
+          id: this.PlannerToAction.id,
+          title: this.plannerTitle,
+          description: this.plannerDescription
+        };
+        await PlannerService.edit(payload);
+        this.toast.add({ severity: 'success', detail: 'Planejamento editado', life: 3000 });
+        this.plannerDialog = false;
+        this.submitted = false;
+        this.initialMethods();
+      } catch (error) {
+        this.toast.add({ severity: 'error', sdetail: 'Error ao editar o planejamento', life: 3000 });
+        return;
+      }
+    },
+    async deletePlanner() {
+      try {
+        this.submitted = true;
+        await PlannerService.delete(this.PlannerToAction.id);
+        this.toast.add({ severity: 'error', summary: 'Exclusão Confirmada', detail: 'Você exclusão o planejamento', life: 3000 });
+        this.submitted = false;
+        this.initialMethods();
+      } catch (error) {
+        this.toast.add({ severity: 'error', sdetail: 'Error ao deletar o planejamento', life: 3000 });
+        return;
+      }
+    },
+    isFormValid() {
+      if (!this.plannerTitle || !this.plannerDescription) {
+        return false;
+      }
+      return true;
     }
   }
 };
