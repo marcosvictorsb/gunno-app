@@ -13,8 +13,8 @@ class PlannerService {
     };
   }
 
-  async getPlannerCurrentYear(year) {
-    return await this.api.get(`/planner/year/${year}`, this.config);
+  async getPlannerCurrentYear(year, idcompany) {
+    return await this.api.get(`/planner/year/${year}/company/${idcompany}`, this.config);
   }
 
   async created(params) {

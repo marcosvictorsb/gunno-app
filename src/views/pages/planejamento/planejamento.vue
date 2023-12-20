@@ -2,11 +2,9 @@
   <Toast />
   <div class="flex flex-wrap align-items-center justify-content-between gap-2">
     <h3>Planejamento {{ currentYear }}</h3>
-    <Button label="Cadastrar planejamento anual" severity="info" @click="addPlanner" class="mb-3"/>
+    <Button label="Cadastrar planejamento anual" severity="info" @click="addPlanner" class="mb-3" />
   </div>
-  
   <ConfirmDialog></ConfirmDialog>
-  
   <Dialog v-model:visible="plannerDialog" :style="{ width: '750px' }" :header="plannerDialogTitle" :modal="true" class="p-fluid" :closable="false">
     <div class="field">
       <label for="name">Titulo</label>
@@ -27,41 +25,33 @@
   </Dialog>
 
   <div class="card">
-    <div class="flex mb-3 gap-2 justify-content-end">
-      <Button @click="active = 0" rounded label="1" class="w-2rem h-2rem p-0" :outlined="active !== 0" />
-      <Button @click="active = 1" rounded label="2" class="w-2rem h-2rem p-0" :outlined="active !== 1" />
-      <Button @click="active = 2" rounded label="3" class="w-2rem h-2rem p-0" :outlined="active !== 2" />
+    <div v-for="(planner, index) in planners" :key="planner.id" class="mb-3">
+      <Panel toggleable>
+        <template #header>
+          <div class="flex align-items-center gap-2">
+            <span class="font-bold">{{ planner.title }}</span>
+          </div>
+        </template>
+        <template #icons>
+          <button class="p-panel-header-icon p-link mr-2" @click="toggle($event, index)">
+            <span class="pi pi-cog"></span>
+          </button>
+          <Menu ref="menuPlanner" id="config_menu" :model="items" popup />
+        </template>
+        <p class="m-0">
+          {{ planner.description }}
+        </p>
+      </Panel>
     </div>
-    <Accordion v-model:activeIndex="active">
-      <template #title> Simple Card </template>
-      <AccordionTab header="Header I">
-        <p class="m-0">
-          Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis
-          aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
-        </p>
-      </AccordionTab>
-      <AccordionTab header="Header II">
-        <p class="m-0">
-          Sed ut perspiciatis unde omnis iste natus error sit voluptatem accusantium doloremque laudantium, totam rem aperiam, eaque ipsa quae ab illo inventore veritatis et quasi architecto beatae vitae dicta sunt explicabo. Nemo enim ipsam
-          voluptatem quia voluptas sit aspernatur aut odit aut fugit, sed quia consequuntur magni dolores eos qui ratione voluptatem sequi nesciunt. Consectetur, adipisci velit, sed quia non numquam eius modi.
-        </p>
-      </AccordionTab>
-      <AccordionTab header="Header III">
-        <p class="m-0">
-          At vero eos et accusamus et iusto odio dignissimos ducimus qui blanditiis praesentium voluptatum deleniti atque corrupti quos dolores et quas molestias excepturi sint occaecati cupiditate non provident, similique sunt in culpa qui officia
-          deserunt mollitia animi, id est laborum et dolorum fuga. Et harum quidem rerum facilis est et expedita distinctio. Nam libero tempore, cum soluta nobis est eligendi optio cumque nihil impedit quo minus.
-        </p>
-      </AccordionTab>
-    </Accordion>
   </div>
 </template>
 
 <script>
-import Accordion from 'primevue/accordion';
-import AccordionTab from 'primevue/accordiontab';
 import Dialog from 'primevue/dialog';
 import ConfirmDialog from 'primevue/confirmdialog';
 import Textarea from 'primevue/textarea';
+import Menu from 'primevue/menu';
+import Panel from 'primevue/panel';
 import PlannerService from '../../../service/PlannerService';
 import { useToast } from 'primevue/usetoast';
 import { useConfirm } from 'primevue/useconfirm';
@@ -69,11 +59,11 @@ import { useConfirm } from 'primevue/useconfirm';
 export default {
   name: 'planejamento',
   components: {
-    Accordion,
-    AccordionTab,
     Dialog,
     ConfirmDialog,
-    Textarea
+    Textarea,
+    Menu,
+    Panel
   },
   data() {
     return {
@@ -84,11 +74,44 @@ export default {
       plannerTitle: '',
       plannerDescription: '',
       toast: useToast(),
-      confirm: useConfirm()
+      confirm: useConfirm(),
+      planners: [],
+      items: [
+        {
+          label: 'Refresh',
+          icon: 'pi pi-refresh'
+        },
+        {
+          label: 'Search',
+          icon: 'pi pi-search'
+        },
+        {
+          separator: true
+        },
+        {
+          label: 'Delete',
+          icon: 'pi pi-times'
+        }
+      ],
+      menus: []
     };
   },
   created() {
     this.initialMethods();
+  },
+  mounted() {
+    this.$nextTick(() => {
+      this.menus = [];
+      this.planners.forEach((planner, index) => {
+        const menuRef = this.$refs.menuPlanner[index];
+        console.log(`Planner ${index}:`, planner);
+        console.log(`Menu ${index}:`, menuRef);
+        if (menuRef) {
+          this.menus.push(menuRef);
+        }
+      });
+      console.log('Menus:', this.menus);
+    });
   },
   methods: {
     resetIntputs() {
@@ -109,7 +132,7 @@ export default {
       const planner = {
         title: this.plannerTitle,
         description: this.plannerDescription,
-        idcompany,
+        idcompany
       };
       const result = await PlannerService.created(planner);
       const status = result.data.status;
@@ -121,10 +144,20 @@ export default {
     async getPlannerCurrentYear() {
       const userStore = this.$store.state.user;
       const idcompany = userStore.idcompany;
-      await PlannerService.getPlannerCurrentYear(new Date().getFullYear());
+      const currentYear = new Date().getFullYear();
+      const { status, body } = (await PlannerService.getPlannerCurrentYear(currentYear, idcompany)).data;
+      this.planners = body.result;
     },
     async initialMethods() {
       await this.getPlannerCurrentYear();
+    },
+    toggle(event, index) {
+      const menuRef = this.$refs.menuPlanner[index];
+      if (menuRef) {
+        menuRef.toggle(event);
+      } else {
+        console.error(`Menu reference not found for index ${index}`);
+      }
     }
   }
 };
