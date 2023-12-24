@@ -3,10 +3,20 @@
   <div>
     <ConfirmDialog/>
   </div>
-  <div class="flex justify-content-end mb-3">    
-    <Button label="Criar OKR" severity="info" @click="addOKR" />    
+  <div class="flex justify-content-between mb-3"> 
+    <!-- <div>
+      <InputGroup>
+        <MultiSelect v-model="year" :options="years" optionLabel="name" placeholder="Selecione a equipe" :maxSelectedLabels="1" class="w-full md:w-20rem" />
+        <Button icon="pi pi-search" severity="warning" />
+      </InputGroup>   
+    </div> -->
+    <div>
+      <Button label="Criar OKR" severity="info" @click="addOKR" />    
+    </div>
   </div>
   
+  <Loading :is-loading="isLoading"/>
+
   <Fieldset :legend="legend" v-if="!resultObjectives">    
     <p class="m-0">
       Neste trimestre, não foram cadastrados ainda Objetivos e Resultados-Chave (OKRs) no sistema. 
@@ -152,6 +162,10 @@ import ProgressBar from 'primevue/progressbar';
 import ConfirmDialog from 'primevue/confirmdialog';
 import Divider from 'primevue/divider';
 import Fieldset from 'primevue/fieldset';
+import InputGroup from 'primevue/inputgroup';
+import MultiSelect from 'primevue/multiselect';
+
+import Loading from '../../../components/loading/loading.vue';
 
 import OkrService from '../../../service/OkrService';
 import UserService from '../../../service/UserService';
@@ -168,7 +182,10 @@ export default {
     ProgressBar,
     ConfirmDialog,
     Divider,
-    Fieldset
+    Fieldset,
+    Loading,
+    InputGroup,
+    MultiSelect
   },
   data() {
     return {
@@ -191,7 +208,10 @@ export default {
       resultObjectives: null,
       confirm: useConfirm(),
       idcompany: null,
-      legend: `No quarter atual não temos okr cadastradas ainda`
+      legend: `No quarter atual não temos okr cadastradas ainda`,
+      isLoading: false,
+      years: [{ name: '2023' }, { name: '2022' }, { name: '2021' }, { name: '2020' }],
+      year: null
     };
   },
   async created() {
@@ -224,12 +244,14 @@ export default {
     },
     async initialMethods() {
       try {
+        this.isLoading = true;
         const userStore = this.$store.state.user;
         this.idcompany = userStore.idcompany;
         const quarter = getCurrentQuarter();
         const { data } = await OkrService.getObjectiveByQuarter(quarter, this.idcompany);
         this.resultObjectives = data.result;
         this.okrs = this.mapperProgressValue(this.resultObjectives);
+        this.isLoading = false;
       } catch (error) {
         if (error.response.status === 404) {
           return (this.okrs = []);

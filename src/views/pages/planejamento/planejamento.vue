@@ -2,7 +2,6 @@
   <Toast />
   <div class="flex flex-wrap align-items-center justify-content-between gap-2">
     <h3>Planejamento {{ currentYear }}</h3>
-    <Button label="Cadastrar planejamento anual" severity="info" @click="addPlanner" class="mb-3" />
   </div>
   <ConfirmDialog></ConfirmDialog>
   <Dialog v-model:visible="plannerDialog" :style="{ width: '750px' }" :header="plannerDialogTitle" :modal="true" class="p-fluid" :closable="false">
@@ -25,6 +24,9 @@
   </Dialog>
 
   <div class="card">
+    <div class="div-button">
+      <Button label="Cadastrar planejamento anual" severity="info" @click="addPlanner" class="mb-3 justify-content-end" />
+    </div>
     <div v-for="(planner, index) in planners" :key="planner.id" class="mb-3">
       <Panel toggleable>
         <template #header>
@@ -157,7 +159,7 @@ export default {
       const status = result.data.status;
       if (status == 201) {
         this.hideDialog();
-        this.toast.add({ severity: 'success', summary: 'Sucesso', detail: 'Planejamento cadastrado com sucesso!' });
+        this.toast.add({ severity: 'success', summary: 'Sucesso', detail: 'Planejamento cadastrado com sucesso!', life: 3000 });
       }
       this.submitted = false;
       this.initialMethods();
@@ -230,4 +232,9 @@ export default {
 };
 </script>
 
-<style></style>
+<style>
+.div-button {
+  display: grid;
+}
+
+</style>

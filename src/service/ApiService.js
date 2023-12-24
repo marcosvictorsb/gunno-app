@@ -1,5 +1,6 @@
 import axios from 'axios';
 import router from '../router';
+import store from '../store';
 
 const ApiService = axios.create({
   baseURL: 'http://localhost:3000'
@@ -12,7 +13,7 @@ ApiService.interceptors.response.use(
   (error) => {
     console.error(error);
     if (error.response.status === 401) {
-      console.log(router);
+      store.dispatch('logout');
       router.push('/login');
     }
     return Promise.reject(error);
