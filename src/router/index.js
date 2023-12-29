@@ -1,9 +1,9 @@
-import { createRouter, createWebHashHistory } from 'vue-router';
+import { createRouter, createWebHistory } from 'vue-router';
 import AppLayout from '@/layout/AppLayout.vue';
 import authGuard from '../service/AuthGuard';
 
 const router = createRouter({
-  history: createWebHashHistory(),
+  history: createWebHistory(),
   mode: 'hash',
   routes: [
     {
@@ -17,11 +17,11 @@ const router = createRouter({
       component: () => import('@/views/pages/login/login.vue')
     },
     {
-      path: '/',
+      path: '/dashboard',
       component: AppLayout,
       children: [
         {
-          path: '/dashboard',
+          path: '',
           name: 'dashboard',
           component: () => import('@/views/Dashboard.vue'),
           beforeEnter: authGuard
