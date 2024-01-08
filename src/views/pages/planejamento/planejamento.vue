@@ -1,7 +1,7 @@
 <template>
   <Toast />
   <div class="flex flex-wrap align-items-center justify-content-between gap-2">
-    <h3>Planejamento {{ currentYear }}</h3>
+    <h3>Planejamento {{ selectedYear }}</h3>
   </div>
   <ConfirmDialog></ConfirmDialog>
   <Dialog v-model:visible="plannerDialog" :style="{ width: '750px' }" :header="plannerDialogTitle" :modal="true" class="p-fluid" :closable="false">
@@ -25,7 +25,7 @@
 
   <div class="card">
     <div class="div-button">
-      <Button label="Cadastrar planejamento anual" severity="info" @click="addPlanner" class="mb-3 justify-content-end" />
+      <Button label="Cadastrar planejamento anual" severity="info" @click="addPlanner" class="mb-3 justify-content-end" v-if="selectedYear >= currentYear" />
     </div>
     <div v-for="(planner, index) in planners" :key="planner.id" class="mb-3">
       <Panel toggleable>
@@ -64,6 +64,7 @@ import Panel from 'primevue/panel';
 import PlannerService from '../../../service/PlannerService';
 import { useToast } from 'primevue/usetoast';
 import { useConfirm } from 'primevue/useconfirm';
+import { eventBus } from '../../../components/EventBus/EventBus';
 
 export default {
   name: 'planejamento',
@@ -107,10 +108,15 @@ export default {
       ],
       menus: [],
       isEditPlanner: false,
-      submitted: false
+      submitted: false,
+      buscarHandler: () => {
+        console.log('Buscar');
+      },
+      selectedYear: null
     };
   },
   created() {
+    this.selectedYear = this.currentYear;
     this.initialMethods();
   },
   mounted() {
@@ -118,13 +124,16 @@ export default {
       this.menus = [];
       this.planners.forEach((planner, index) => {
         const menuRef = this.$refs.menuPlanner[index];
-        console.log(`Planner ${index}:`, planner);
-        console.log(`Menu ${index}:`, menuRef);
         if (menuRef) {
           this.menus.push(menuRef);
         }
       });
     });
+
+    eventBus.on('evento-filtro-clicado', this.handler);
+  },
+  beforeUnmount() {
+    // eventBus.on('evento-filtro-clicado', this.handler);
   },
   methods: {
     resetIntputs() {
@@ -167,8 +176,7 @@ export default {
     async getPlannerCurrentYear() {
       const userStore = this.$store.state.user;
       const idcompany = userStore.idcompany;
-      const currentYear = new Date().getFullYear();
-      const { body } = (await PlannerService.getPlannerCurrentYear(currentYear, idcompany)).data;
+      const { body } = (await PlannerService.getPlannerByYear(this.currentYear, idcompany)).data;
       this.planners = body.result;
     },
     async initialMethods() {
@@ -227,6 +235,17 @@ export default {
         return false;
       }
       return true;
+    },
+    async handler(year) {
+      try {
+        const userStore = this.$store.state.user;
+        const idcompany = userStore.idcompany;
+        this.selectedYear = year;
+        const { body } = (await PlannerService.getPlannerByYear(year, idcompany)).data;
+        this.planners = body.result;
+      } catch (error) {
+        console.error(error);
+      }
     }
   }
 };

@@ -4,6 +4,9 @@
     <div class="layout-sidebar">
       <app-sidebar></app-sidebar>
     </div>
+
+    <FiltroPlanejamento v-if="mostrarFiltro" />
+
     <div class="layout-main-container">
       <div class="layout-main">
         <router-view></router-view>
@@ -21,6 +24,7 @@ import AppFooter from './AppFooter.vue';
 import AppSidebar from './AppSidebar.vue';
 import AppConfig from './AppConfig.vue';
 import { useLayout } from '@/layout/composables/layout';
+import FiltroPlanejamento from '../components/Filtro/FiltroPlanejamento.vue';
 
 const { layoutConfig, layoutState, isSidebarActive } = useLayout();
 
@@ -29,17 +33,22 @@ export default {
     AppFooter,
     AppTopbar,
     AppSidebar,
-    AppConfig
+    AppConfig,
+    FiltroPlanejamento
   },
   data() {
     return {
       layoutConfig: layoutConfig,
       layoutState: layoutState,
       isSidebarActive: isSidebarActive,
-      outsideClickListener: null
+      outsideClickListener: null,
     };
   },
+  created() {},
   watch: {
+    $route(to) {
+      this.mostrarFiltro = to.path === '/planejamento';
+    },
     isSidebarActive(newVal) {
       if (newVal) {
         this.bindOutsideClickListener();
@@ -59,7 +68,7 @@ export default {
         'layout-mobile-active': this.layoutState.staticMenuMobileActive,
         'p-input-filled': this.layoutConfig.inputStyle === 'filled',
         'p-ripple-disabled': !this.layoutConfig.ripple
-      }
+      };
     }
   },
   methods: {
@@ -90,4 +99,6 @@ export default {
 };
 </script>
 
-<style lang="scss" scoped></style>
+<style lang="scss" scoped>
+
+</style>

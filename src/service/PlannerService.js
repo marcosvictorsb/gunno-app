@@ -13,7 +13,7 @@ class PlannerService {
     };
   }
 
-  async getPlannerCurrentYear(year, idcompany) {
+  async getPlannerByYear(year, idcompany) {
     return await this.api.get(`/planner/year/${year}/company/${idcompany}`, this.config);
   }
 
@@ -27,6 +27,10 @@ class PlannerService {
 
   async delete(id) {
     return await this.api.delete(`/planner/${id}`, this.config);
+  }
+
+  async getAllYears(idcompany) {
+    return await this.api.get(`/planner/company/${idcompany}/years`, this.config);
   }
 }
 

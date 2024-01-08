@@ -64,7 +64,6 @@ export default {
           this.$router.push({ name: 'dashboard' });
         }
       } catch (error) {
-        console.log(error);
         if (error.response.data.status === 409) {
           this.toast.add({ severity: 'warn', summary: 'Falha no Login', detail: 'Credenciais inválidas. Por favor, verifique seu e-mail e senha e tente novamente', life: 8000 });
           return;

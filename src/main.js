@@ -104,8 +104,10 @@ import VirtualScroller from 'primevue/virtualscroller';
 import BlockViewer from '@/components/BlockViewer.vue';
 
 import '@/assets/styles.scss';
+import { eventBus } from './components/EventBus/EventBus';
 
 const app = createApp(App);
+app.config.globalProperties.$eventBus = eventBus;
 
 app.use(router);
 app.use(store);

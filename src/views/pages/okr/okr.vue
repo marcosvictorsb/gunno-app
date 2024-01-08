@@ -253,6 +253,7 @@ export default {
         this.okrs = this.mapperProgressValue(this.resultObjectives);
         this.isLoading = false;
       } catch (error) {
+        this.isLoading = false;
         if (error.response.status === 404) {
           return (this.okrs = []);
         }
