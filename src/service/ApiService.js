@@ -14,6 +14,7 @@ ApiService.interceptors.response.use(
     console.error(error);
     if (error.response.status === 401) {
       store.dispatch('logout');
+      store.resetState('logout');
       router.push('/login');
     }
     return Promise.reject(error);

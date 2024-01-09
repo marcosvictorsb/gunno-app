@@ -18,6 +18,10 @@ export default createStore({
       const channel = new BroadcastChannel('auth');
       channel.postMessage('logout');
       window.location.href = '/login';
+    },
+    resetState(state) {
+      state.user = { token: null }; // Redefine o estado para o valor inicial
+      localStorage.removeItem('user');
     }
   },
   actions: {},

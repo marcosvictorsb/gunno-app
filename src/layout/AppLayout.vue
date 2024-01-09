@@ -44,7 +44,9 @@ export default {
       outsideClickListener: null,
     };
   },
-  created() {},
+  created() {
+    this.mostrarFiltro = window.location.pathname === '/planejamento';
+  },
   watch: {
     $route(to) {
       this.mostrarFiltro = to.path === '/planejamento';
