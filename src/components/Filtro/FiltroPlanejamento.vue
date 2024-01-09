@@ -29,7 +29,7 @@ export default {
   },
   methods: {
     dispararEvento() {
-      eventBus.emit('evento-filtro-clicado', this.selectedYear.name);
+      eventBus.emit('evento-planejamento-clicado', this.selectedYear.name);
     },
 
     async getAllYears() {

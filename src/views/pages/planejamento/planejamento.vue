@@ -130,10 +130,10 @@ export default {
       });
     });
 
-    eventBus.on('evento-filtro-clicado', this.handler);
+    eventBus.on('evento-planejamento-clicado', this.handler);
   },
   beforeUnmount() {
-    // eventBus.on('evento-filtro-clicado', this.handler);
+    // eventBus.on('evento-planejamento-clicado', this.handler);
   },
   methods: {
     resetIntputs() {
