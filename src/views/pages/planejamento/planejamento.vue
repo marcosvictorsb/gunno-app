@@ -4,6 +4,7 @@
     <h3>Planejamento {{ selectedYear }}</h3>
   </div>
   <ConfirmDialog></ConfirmDialog>
+  <Loading :isLoading="isLoading" />
   <Dialog v-model:visible="plannerDialog" :style="{ width: '750px' }" :header="plannerDialogTitle" :modal="true" class="p-fluid" :closable="false">
     <div class="field">
       <label for="name">Titulo</label>
@@ -65,6 +66,7 @@ import PlannerService from '../../../service/PlannerService';
 import { useToast } from 'primevue/usetoast';
 import { useConfirm } from 'primevue/useconfirm';
 import { eventBus } from '../../../components/EventBus/EventBus';
+import Loading from '../../../components/Loading/Loading.vue';
 
 export default {
   name: 'planejamento',
@@ -73,7 +75,8 @@ export default {
     ConfirmDialog,
     Textarea,
     Menu,
-    Panel
+    Panel,
+    Loading
   },
   data() {
     return {
@@ -112,7 +115,8 @@ export default {
       buscarHandler: () => {
         console.log('Buscar');
       },
-      selectedYear: null
+      selectedYear: null,
+      isLoading: false,
     };
   },
   created() {
@@ -174,10 +178,16 @@ export default {
       this.initialMethods();
     },
     async getPlannerCurrentYear() {
-      const userStore = this.$store.state.user;
-      const idcompany = userStore.idcompany;
-      const { body } = (await PlannerService.getPlannerByYear(this.currentYear, idcompany)).data;
-      this.planners = body.result;
+      try {
+        this.isLoading = true;
+        const userStore = this.$store.state.user;
+        const idcompany = userStore.idcompany;
+        const { body } = (await PlannerService.getPlannerByYear(this.currentYear, idcompany)).data;
+        this.planners = body.result;
+        this.isLoading = false;
+      } catch (error) {
+        this.isLoading = false;
+      }
     },
     async initialMethods() {
       await this.getPlannerCurrentYear();

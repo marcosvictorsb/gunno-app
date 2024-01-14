@@ -3,7 +3,8 @@
   <div>
     <ConfirmDialog></ConfirmDialog>
   </div>
-  <div>        
+  <div>
+    <Loading :isLoading="isLoading" />        
     <DataTable v-model:editingRows="editingRows" :value="teams" paginator :rows="10" :rowsPerPageOptions="[10, 20, 50]" 
     showGridlines editMode="row" dataKey="id" class="p-datatable-sm"
     :pt="{
@@ -69,13 +70,15 @@ import ConfirmDialog from 'primevue/confirmdialog';
 import TeamService from '../../../service/TeamService';
 import { useToast } from 'primevue/usetoast';
 import { useConfirm } from 'primevue/useconfirm';
+import Loading from '../../../components/Loading/Loading.vue';
 
 export default {
   components: {
     DataTable,
     Column,
     Dialog,
-    ConfirmDialog
+    ConfirmDialog,
+    Loading
   },
   data() {
     return {
@@ -88,7 +91,8 @@ export default {
       submitted: false,
       toast: useToast(),
       confirm: useConfirm(),
-      idcompany: null
+      idcompany: null,
+      isLoading: false,
     };
   },
   async created() {
@@ -108,11 +112,14 @@ export default {
     },
     async initialMethods() {
       try {
+        this.isLoading = true;
         const userStore = this.$store.state.user;
         this.idcompany = userStore.idcompany;
         const { body } = (await TeamService.getTeams(this.idcompany)).data;
         this.teams = body.result.teams;
+        this.isLoading = false;
       } catch (error) {
+        this.isLoading = false;
         console.log(error);
       }
     },

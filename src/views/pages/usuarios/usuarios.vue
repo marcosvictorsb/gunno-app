@@ -148,13 +148,19 @@ export default {
       await this.initialMethods();
     },
     async initialMethods() {
-      const userStore = this.$store.state.user;
-      this.idcompany = userStore.idcompany;
-      const { body } = (await UserService.getAllUser(this.idcompany)).data;
-      this.users = body.result.users;
+      try {
+        this.isLoading = true;
+        const userStore = this.$store.state.user;
+        this.idcompany = userStore.idcompany;
+        const { body } = (await UserService.getAllUser(this.idcompany)).data;
+        this.users = body.result.users;
 
-      const { body: bodyTeam } = (await TeamService.getTeams(this.idcompany)).data;
-      this.teams = bodyTeam.result.teams;
+        const { body: bodyTeam } = (await TeamService.getTeams(this.idcompany)).data;
+        this.teams = bodyTeam.result.teams;
+        this.isLoading = false;
+      } catch (error) {
+        this.isLoading = false;
+      }
     },
     async saveUserEdited() {
       try {
