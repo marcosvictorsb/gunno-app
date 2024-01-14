@@ -5,7 +5,8 @@
       <app-sidebar></app-sidebar>
     </div>
 
-    <FiltroPlanejamento v-if="mostrarFiltro" />
+    <FiltroPlanejamento v-if="mostrarFiltroPlanejamento" />
+    <FiltroOkr v-if="mostrarFiltroOkr" />
 
     <div class="layout-main-container">
       <div class="layout-main">
@@ -13,7 +14,6 @@
       </div>
       <app-footer></app-footer>
     </div>
-    <app-config></app-config>
     <div class="layout-mask"></div>
   </div>
 </template>
@@ -22,9 +22,9 @@
 import AppTopbar from './AppTopbar.vue';
 import AppFooter from './AppFooter.vue';
 import AppSidebar from './AppSidebar.vue';
-import AppConfig from './AppConfig.vue';
 import { useLayout } from '@/layout/composables/layout';
 import FiltroPlanejamento from '../components/Filtro/FiltroPlanejamento.vue';
+import FiltroOkr from '../components/Filtro/FiltroOkr.vue';
 
 const { layoutConfig, layoutState, isSidebarActive } = useLayout();
 
@@ -33,8 +33,8 @@ export default {
     AppFooter,
     AppTopbar,
     AppSidebar,
-    AppConfig,
-    FiltroPlanejamento
+    FiltroPlanejamento,
+    FiltroOkr
   },
   data() {
     return {
@@ -42,14 +42,18 @@ export default {
       layoutState: layoutState,
       isSidebarActive: isSidebarActive,
       outsideClickListener: null,
+      mostrarFiltroPlanejamento: null,
+      mostrarFiltroOkr: null
     };
   },
   created() {
-    this.mostrarFiltro = window.location.pathname === '/planejamento';
+    this.mostrarFiltroPlanejamento = window.location.pathname === '/planejamento';
+    this.mostrarFiltroOkr = window.location.pathname === '/okr';
   },
   watch: {
     $route(to) {
-      this.mostrarFiltro = to.path === '/planejamento';
+      this.mostrarFiltroPlanejamento = to.path === '/planejamento';
+      this.mostrarFiltroOkr = to.path === '/okr';
     },
     isSidebarActive(newVal) {
       if (newVal) {
