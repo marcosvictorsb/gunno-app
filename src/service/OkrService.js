@@ -21,12 +21,16 @@ class OkrService {
     return await this.api.post('/objectives', payload, this.config);
   }
 
-//   async edit(payload) {
-//     return await this.api.put(`/user`, payload, this.config);
-//   }
+  //   async edit(payload) {
+  //     return await this.api.put(`/user`, payload, this.config);
+  //   }
 
   async delete(id) {
     return await this.api.delete(`/objectives/${id}`, this.config);
+  }
+
+  async getAllYears(idcompany) {
+    return await this.api.get(`/objectives/company/${idcompany}/years`, this.config);
   }
 }
 
