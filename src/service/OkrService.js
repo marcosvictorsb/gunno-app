@@ -32,6 +32,12 @@ class OkrService {
   async getAllYears(idcompany) {
     return await this.api.get(`/objectives/company/${idcompany}/years`, this.config);
   }
+
+  async getObjectiveByFilters(options) {
+    this.config.params = null;
+    this.config.params = { ...options };
+    return await this.api.get('/objectives/filter', this.config);
+  }
 }
 
 export default new OkrService();

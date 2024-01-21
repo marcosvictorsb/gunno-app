@@ -3,16 +3,9 @@
   <div>
     <ConfirmDialog/>
   </div>
-  <div class="flex justify-content-between mb-3"> 
-    <!-- <div>
-      <InputGroup>
-        <MultiSelect v-model="year" :options="years" optionLabel="name" placeholder="Selecione a equipe" :maxSelectedLabels="1" class="w-full md:w-20rem" />
-        <Button icon="pi pi-search" severity="warning" />
-      </InputGroup>   
-    </div> -->
-    <div>
-      <Button label="Criar OKR" severity="info" @click="addOKR" />    
-    </div>
+  <div class="flex justify-content-between mb-3">
+      <h3>OKRs - {{ selectedYear }} / {{  selectedQuarter }}</h3>
+      <Button label="Criar OKR" severity="info" @click="addOKR" size="small" v-if="selectedYear >= currentYear"/>    
   </div>
   
   <Loading :is-loading="isLoading"/>
@@ -69,7 +62,7 @@
 
       <Column field="valueTarget" header="Valor Alvo" style="width: 10%">
           <template #editor="{ data, field }">
-              s
+            <InputText v-model="data[field]" />
           </template>
       </Column>
 
@@ -162,17 +155,14 @@ import ProgressBar from 'primevue/progressbar';
 import ConfirmDialog from 'primevue/confirmdialog';
 import Divider from 'primevue/divider';
 import Fieldset from 'primevue/fieldset';
-import InputGroup from 'primevue/inputgroup';
-import MultiSelect from 'primevue/multiselect';
-
 import Loading from '../../../components/loading/loading.vue';
-
 import OkrService from '../../../service/OkrService';
 import UserService from '../../../service/UserService';
 import ResultKeyService from '../../../service/ResultKeyService';
-import { getCurrentQuarter } from '../../../helpers/quarterYears';
+import { getCurrentQuarter, getCurrentYear } from '../../../helpers/quarterYears';
 import { useToast } from 'primevue/usetoast';
 import { useConfirm } from 'primevue/useconfirm';
+import { eventBus } from '../../../components/EventBus/EventBus';
 
 export default {
   components: {
@@ -183,9 +173,7 @@ export default {
     ConfirmDialog,
     Divider,
     Fieldset,
-    Loading,
-    InputGroup,
-    MultiSelect
+    Loading
   },
   data() {
     return {
@@ -211,11 +199,17 @@ export default {
       legend: `No quarter atual não temos okr cadastradas ainda`,
       isLoading: false,
       years: [{ name: '2023' }, { name: '2022' }, { name: '2021' }, { name: '2020' }],
-      year: null
+      year: null,
+      selectedYear: null,
+      selectedQuarter: null,
+      currentYear: new Date().getFullYear()
     };
   },
   async created() {
     await this.initialMethods();
+  },
+  mounted() {
+    eventBus.on('evento-okr-clicado', this.getOkr);
   },
   methods: {
     addOKR() {
@@ -248,6 +242,8 @@ export default {
         const userStore = this.$store.state.user;
         this.idcompany = userStore.idcompany;
         const quarter = getCurrentQuarter();
+        this.selectedQuarter = quarter;
+        this.selectedYear = getCurrentYear();
         const { data } = await OkrService.getObjectiveByQuarter(quarter, this.idcompany);
         this.resultObjectives = data.result;
         this.okrs = this.mapperProgressValue(this.resultObjectives);
@@ -394,6 +390,24 @@ export default {
     isInitialValueValid(initialValue) {
       const isValid = initialValue && initialValue >= 0;
       return isValid && this.submitted;
+    },
+    async getOkr(options) {
+      try {
+        this.isLoading = true;
+        this.okrs = null;
+        this.resultObjectives = null;
+        this.selectedYear = options.year || this.selectedQuarter;
+        this.selectedQuarter = options.quarter || this.selectedQuarter;
+        const { data } = await OkrService.getObjectiveByFilters(options);
+        this.resultObjectives = data.result;
+        this.okrs = this.mapperProgressValue(this.resultObjectives);
+        this.isLoading = false;
+      } catch (error) {
+        console.error(error);
+        this.legend = `No quarter ${options.quarter} referente ao ano de ${options.year} não tivemos okr`;
+        this.okrs = null;
+        this.isLoading = false;
+      }
     }
   }
 };
