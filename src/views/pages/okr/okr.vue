@@ -89,8 +89,8 @@
   </div>
 
 
-  <div>
-    <Dialog v-model:visible="okrDialog" :style="{width: '450px'}" header="Criar OKR" :modal="true" class="p-fluid">
+  <div id="modal-okr">
+    <Dialog v-model:visible="okrDialog" :style="{width: '750px'}" header="Criar OKR" :modal="true" class="p-fluid">
       <div class="field">
         <label for="name">Objetivo</label>
         <InputText id="name" v-model.trim="okrName" required="true" autofocus :class="{'p-invalid': submitted && !okrName}" />
@@ -105,8 +105,8 @@
     </Dialog>
   </div>
   
-  <div>
-    <Dialog v-model:visible="resultkeyDialog" :style="{width: '450px'}" header="Criar OKR" :modal="true" class="p-fluid">
+  <div id="modal-result-key">
+    <Dialog v-model:visible="resultkeyDialog" :style="{width: '750px'}" header="Criar OKR" :modal="true" class="p-fluid">
       <div class="field">
         <label for="resultadoChave">Resultado Chaves</label>
         <InputText id="resultadoChave" v-model.trim="resultkey.name" required="true" autofocus :class="{'p-invalid': submitted && !resultkey.name}" />
@@ -133,9 +133,28 @@
       </div>
 
       <div class="field">
+        <label for="equipe">Equipe</label>
+        <Dropdown v-model="selectedTeam" :options="teams" filter optionLabel="name" placeholder="Selecione uma equipe" class="w-full">
+          <template #value="slotProps">
+              <div v-if="slotProps.value" class="flex align-items-center">
+                  <div>{{ slotProps.value.name }}</div>
+              </div>
+              <span v-else>
+                  {{ slotProps.placeholder }}
+              </span>
+          </template>
+          <template #option="slotProps">
+              <div class="flex align-items-center">
+                  <div>{{ slotProps.option.name }}</div>
+              </div>
+          </template>
+        </Dropdown>
+      </div>
+
+      <div class="field">
         <label for="equipe">Responsável</label>
-        <Dropdown v-model="selectedUser" :options="users" filter optionLabel="name" placeholder="Selecione um responsavel" class="w-full md" required="true" autofocus :class="{'p-invalid': submitted && Object.keys(selectedUser).length === 0}"/>
-        <small class="p-error" v-if="submitted && Object.keys(selectedUser).length === 0">Responsável é obrigatório</small>
+        <Dropdown :disabled="disableDropdownUser" v-model="selectedUser" :options="users" filter optionLabel="name" placeholder="Selecione um responsavel" class="w-full md" required="true" autofocus :class="{'p-invalid': submitted && (!selectedUser ||Object.keys(selectedUser).length === 0)}"/>
+        <small class="p-error" v-if="submitted && (!selectedUser ||Object.keys(selectedUser).length === 0)">Responsável é obrigatório</small>
       </div>
 
       <template #footer>
@@ -159,6 +178,8 @@ import Loading from '../../../components/loading/loading.vue';
 import OkrService from '../../../service/OkrService';
 import UserService from '../../../service/UserService';
 import ResultKeyService from '../../../service/ResultKeyService';
+import TeamService from '../../../service/TeamService';
+import TeamUserService from '../../../service/TeamUserService';
 import { getCurrentQuarter, getCurrentYear } from '../../../helpers/quarterYears';
 import { useToast } from 'primevue/usetoast';
 import { useConfirm } from 'primevue/useconfirm';
@@ -186,7 +207,7 @@ export default {
       submitted: false,
       toast: useToast(),
       editingRows: [],
-      selectedUser: {},
+      selectedUser: null,
       users: [],
       user: [],
       idObjectives: null,
@@ -202,7 +223,10 @@ export default {
       year: null,
       selectedYear: null,
       selectedQuarter: null,
-      currentYear: new Date().getFullYear()
+      currentYear: new Date().getFullYear(),
+      teams: [],
+      selectedTeam: null,
+      disableDropdownUser: true
     };
   },
   async created() {
@@ -211,12 +235,28 @@ export default {
   mounted() {
     eventBus.on('evento-okr-clicado', this.getOkr);
   },
+  watch: {
+    async selectedTeam(newTeam, oldTeam) {
+      if (newTeam != null) {
+        this.disableDropdownUser = false;
+        this.users = [];
+        const { status, body } = (await TeamUserService.getByTeam(this.selectedTeam.id)).data;
+        const idUserByTeam = body.result;
+
+        idUserByTeam.forEach(async (item) => {
+          const { body: bodyUser } = (await UserService.getById(item.userId)).data;
+          this.users.push(bodyUser.result);
+        });
+      }
+    }
+  },
   methods: {
     addOKR() {
       this.loading = true;
       this.okrDialog = true;
       this.loading = false;
       this.submitted = false;
+      this.selectedTeam = null;
     },
     hideDialog() {
       this.okrDialog = false;
@@ -227,7 +267,7 @@ export default {
         this.submitted = true;
         if (!this.okrName) return;
         const payload = { name: this.okrName, idcompany: this.idcompany };
-        const result = await OkrService.created(payload);
+        await OkrService.created(payload);
         this.toast.add({ severity: 'success', detail: 'Objetivo criado', life: 3000 });
         this.okrDialog = false;
         await this.initialMethods();
@@ -244,9 +284,14 @@ export default {
         const quarter = getCurrentQuarter();
         this.selectedQuarter = quarter;
         this.selectedYear = getCurrentYear();
+
         const { data } = await OkrService.getObjectiveByQuarter(quarter, this.idcompany);
         this.resultObjectives = data.result;
         this.okrs = this.mapperProgressValue(this.resultObjectives);
+
+        const { body: bodyTeam } = (await TeamService.getTeams(this.idcompany)).data;
+        this.teams = bodyTeam.result.teams;
+
         this.isLoading = false;
       } catch (error) {
         this.isLoading = false;
@@ -278,13 +323,12 @@ export default {
     },
     async addResultKey(idObjectives) {
       this.resultkey = [];
-      this.selectedUser = {};
+      this.selectedUser = null;
       this.isEditResultKey = false;
       this.submitted = false;
       this.idObjectives = idObjectives;
       this.resultkeyDialog = true;
-      const { body } = (await UserService.getAllUser(this.idcompany)).data;
-      this.users = body.result.users;
+      this.selectedTeam = {};
     },
     async saveResultKey() {
       try {
@@ -293,10 +337,13 @@ export default {
           ...this.resultkey,
           objectiveId: this.idObjectives,
           userId: this.selectedUser.id,
-          companyId: this.idcompany
+          companyId: this.idcompany,
+          teamId: this.selectedTeam.id
         };
         if (!this.isFormValid(payload)) return;
-        const { body, result } = await (await ResultKeyService.created(payload)).data;
+        await (
+          await ResultKeyService.created(payload)
+        ).data;
         await this.initialMethods();
         this.toast.add({ severity: 'success', detail: 'Resultado chave criado', life: 3000 });
         this.resultkeyDialog = false;
@@ -311,16 +358,23 @@ export default {
       this.resultkeyDialog = false;
     },
     async editResultKey(resultkey) {
-      this.loading = true;
-      this.resultkey = resultkey;
-      this.resultkeyDialog = true;
-      this.isEditResultKey = true;
-
-      const { body } = (await UserService.getAllUser(this.idcompany)).data;
-      this.users = body.result.users;
-      this.user = this.users.filter((user) => user.id === this.resultkey.userId);
-      this.selectedUser = this.user[0];
-      this.loading = false;
+      try {
+        this.loading = true;
+        this.selectedUser = null;
+        this.selectedTeam = null;
+        this.resultkey = resultkey;
+        this.resultkeyDialog = true;
+        this.isEditResultKey = true;
+        const { body: bodyUser } = (await UserService.getById(this.resultkey.userId)).data;
+        const { body: bodyTeam } = (await TeamService.getAllTeamsByID(this.resultkey.teamId)).data;
+        this.selectedUser = bodyUser.result;
+        this.selectedTeam = bodyTeam.result;
+        this.disableDropdownUser = false;
+        this.loading = false;
+      } catch (error) {
+        console.log(error);
+        this.loading = false;
+      }
     },
     async deleteOKR(idOkr) {
       this.confirm.require({
@@ -346,20 +400,25 @@ export default {
     },
     async saveResultKeyEdited() {
       try {
+        this.submitted = true;
         const payload = {
           name: this.resultkey.name,
           valueTarget: this.resultkey.valueTarget,
           initialValue: this.resultkey.initialValue,
           valueCurrent: this.resultkey.valueCurrent,
           objectiveId: this.resultkey.objectiveId,
-          userId: this.selectedUser.id
+          userId: this.selectedUser.id,
+          teamId: this.selectedTeam.id,
+          companyId: this.idcompany
         };
+        if (!this.isFormValid(payload)) return;
         await ResultKeyService.edit(this.resultkey.id, payload);
         this.resultkeyDialog = false;
         this.toast.add({ severity: 'success', detail: 'Resultado chave editado', life: 3000 });
         this.initialMethods();
       } catch (error) {
         this.resultkeyDialog = false;
+        this.submitted = false;
       }
     },
     confirmDeleteResultKey(resultKey) {
@@ -385,7 +444,10 @@ export default {
       });
     },
     isFormValid(payload) {
-      return payload && payload.companyId && payload.initialValue >= 0 && payload.name && payload.objectiveId && payload.userId && payload.valueCurrent >= 0 && payload.valueTarget >= 0;
+      const hasIsValid = payload.companyId && payload.objectiveId && payload.userId && payload.teamId;
+      const hasValueString = payload.name.length > 0;
+      const valueGreaterThaZero = payload.initialValue >= 0 && payload.valueCurrent >= 0 && payload.valueTarget >= 0;
+      return payload && hasIsValid && hasValueString && valueGreaterThaZero;
     },
     isInitialValueValid(initialValue) {
       const isValid = initialValue && initialValue >= 0;

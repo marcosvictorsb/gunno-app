@@ -14,7 +14,11 @@ class TeamUserService {
   }
 
   async getByUser(iduser) {
-    return await this.api.get(`/teamuser/${iduser}`, this.config);
+    return await this.api.get(`/teamuser/user/${iduser}`, this.config);
+  }
+
+  async getByTeam(idteam) {
+    return await this.api.get(`/teamuser/team/${idteam}`, this.config);
   }
 
   async created(params) {
