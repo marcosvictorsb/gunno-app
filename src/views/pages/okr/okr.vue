@@ -134,7 +134,7 @@
 
       <div class="field">
         <label for="equipe">Equipe</label>
-        <Dropdown v-model="selectedTeam" :options="teams" filter optionLabel="name" placeholder="Selecione uma equipe" class="w-full">
+        <Dropdown v-model="selectedTeam" :options="teams" filter optionLabel="name" placeholder="Selecione uma equipe" class="w-full md">
           <template #value="slotProps">
               <div v-if="slotProps.value" class="flex align-items-center">
                   <div>{{ slotProps.value.name }}</div>
@@ -240,8 +240,8 @@ export default {
       if (newTeam != null) {
         this.disableDropdownUser = false;
         this.users = [];
-        const { status, body } = (await TeamUserService.getByTeam(this.selectedTeam.id)).data;
-        const idUserByTeam = body.result;
+        const { result } = (await TeamUserService.getByTeam(this.selectedTeam.id)).data;
+        const idUserByTeam = result;
 
         idUserByTeam.forEach(async (item) => {
           const { body: bodyUser } = (await UserService.getById(item.userId)).data;
