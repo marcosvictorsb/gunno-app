@@ -50,7 +50,7 @@ export default {
   z-index: 999;
   overflow-y: auto;
   user-select: none;
-  top: 28.5rem;
+  top: 31.5rem;
   left: 2rem;
   transition: transform 0.2s, left 0.2s;
   background-color: var(--surface-overlay);

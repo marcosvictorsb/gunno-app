@@ -16,25 +16,39 @@ export default {
   },
   data() {
     return {
-      model: [
-        {
-          label: 'Menu',
-          items: [
-            { label: 'Dashboard', icon: 'pi pi-fw pi-home', to: '/dashboard' },
-            { label: 'Planejamento', icon: 'pi pi-fw pi-id-card', to: '/planejamento' },
-            { label: 'Usuários', icon: 'pi pi-fw pi pi-user', to: '/usuarios' },
-            { label: 'Equipes', icon: 'pi pi-fw pi-users', to: '/equipes' },
-            { label: 'OKR', icon: 'pi pi-fw pi-compass', to: '/okr' },
-            { separator: true },
-            { label: 'Logout', icon: 'pi pi-fw pi-sign-out', to: '/logout' }
-          ]
-        }
-      ]
+      label: 'Menu',
+      items: [
+        { label: 'Dashboard', icon: 'pi pi-fw pi-home', to: '/dashboard' },
+        { label: 'Planejamento', icon: 'pi pi-fw pi-id-card', to: '/planejamento' },
+        { label: 'Usuários', icon: 'pi pi-fw pi pi-user', to: '/usuarios' },
+        { label: 'Equipes', icon: 'pi pi-fw pi-users', to: '/equipes' },
+        { label: 'OKR', icon: 'pi pi-fw pi-compass', to: '/okr' },
+        { separator: true },
+        { label: 'Logout', icon: 'pi pi-fw pi-sign-out', to: '/logout' }
+      ],
+      model: [],
+      isAdmin: false
     };
+  },
+  created() {
+    this.createModelForMenu();
   },
   methods: {
     handleMenuSelected(item) {
       this.$emit('menuSelected', item.to);
+    },
+    createModelForMenu() {
+      this.isAdmin = this.$store.state.user.admin;
+
+      if (this.isAdmin) {
+        const addMenuPanel = { label: 'Painel', icon: 'pi pi-fw pi-desktop', to: '/painel' };
+        this.items.splice(5, 0, addMenuPanel);
+      }
+      const menu = {
+        label: this.label,
+        items: this.items
+      };
+      this.model.push(menu);
     }
   }
 };

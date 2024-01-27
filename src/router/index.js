@@ -1,6 +1,7 @@
 import { createRouter, createWebHistory } from 'vue-router';
 import AppLayout from '@/layout/AppLayout.vue';
-import authGuard from '../service/AuthGuard';
+import authGuard from '../middleware/AuthGuard';
+import isAdmin from '../middleware/isAdmin';
 
 const router = createRouter({
   history: createWebHistory(),
@@ -48,7 +49,13 @@ const router = createRouter({
           name: 'okr',
           component: () => import('@/views/pages/okr/okr.vue'),
           beforeEnter: authGuard
-        },        
+        },
+        {
+          path: '/painel',
+          name: 'painel',
+          component: () => import('@/views/pages/painel/painel.vue'),
+          beforeEnter: [authGuard, isAdmin]
+        },
         {
           path: '/logout',
           name: 'logout',

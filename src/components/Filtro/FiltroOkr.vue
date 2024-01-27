@@ -4,17 +4,19 @@
 
     <div class="field">
       <label for="equipe">Selecione o ano</label>
-      <Dropdown v-model="selectedYear" :options="years" optionLabel="name" class="w-full" placeholder="Selecione o ano" />
+      <Dropdown showClear v-model="selectedYear" :options="years" optionLabel="name" :class="{ 'p-invalid': hasErrorSelectedYear }" class="w-full" placeholder="Selecione o ano" />
+      <small class="p-error" v-if="hasErrorSelectedYear">Ano é obrigatório</small>
     </div>
 
     <div class="field">
       <label for="equipe">Selecione o Quarter</label>
-      <Dropdown v-model="selectedQuarter" :options="quarters" optionLabel="name" class="w-full" placeholder="Selecione o Quarter" />
+      <Dropdown showClear v-model="selectedQuarter" :options="quarters" optionLabel="name" :class="{ 'p-invalid': hasErrorSelectedYQuarter }" class="w-full" placeholder="Selecione o Quarter" />
+      <small class="p-error" v-if="hasErrorSelectedYQuarter">Quarter é obrigatório</small>
     </div>
 
     <div class="field">
       <label for="equipe">Selecione a equipe</label>
-      <Dropdown v-model="selectedTeams" :options="teams" optionLabel="name" class="w-full" placeholder="Selecione a equipe" />
+      <Dropdown showClear v-model="selectedTeams" :options="teams" optionLabel="name" class="w-full" placeholder="Selecione a equipe" />
       <Button label="Filtrar" size="small" class="mt-5 mb-3" @click="dispararEvento" />
     </div>
   </div>
@@ -36,17 +38,27 @@ export default {
       quarters: [{ name: 'Q1' }, { name: 'Q2' }, { name: 'Q3' }, { name: 'Q4' }],
       selectedQuarter: null,
       teams: [],
-      selectedTeams: null
+      selectedTeams: null,
+      hasErrorSelectedYear: false,
+      hasErrorSelectedYQuarter: false,
     };
   },
   async created() {
+    this.hasErrorSelectedYear = false;
+    this.hasErrorSelectedYQuarter = false;
     await this.initialMethods();
   },
   methods: {
+    isValidForm() {
+      this.hasErrorSelectedYear = this.selectedYear === null;
+      this.hasErrorSelectedYQuarter = this.selectedQuarter === null;
+      return !this.hasErrorSelectedYear && !this.hasErrorSelectedYQuarter;
+    },
     dispararEvento() {
+      const isValidFilter = this.isValidForm();
+      if (!isValidFilter) return;
       const userStore = this.$store.state.user;
       const idcompany = userStore.idcompany;
-
       const options = {
         year: this.selectedYear ? this.selectedYear.name : null,
         team: this.selectedTeams ? this.selectedTeams.name : null,
@@ -86,7 +98,7 @@ export default {
   z-index: 999;
   overflow-y: auto;
   user-select: none;
-  top: 28.5rem;
+  top: 31.3rem;
   left: 2rem;
   transition: transform 0.2s, left 0.2s;
   background-color: var(--surface-overlay);

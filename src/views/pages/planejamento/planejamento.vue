@@ -26,7 +26,7 @@
 
   <div class="card">
     <div class="div-button">
-      <Button label="Cadastrar planejamento anual" severity="info" @click="addPlanner" class="mb-3 justify-content-end" v-if="selectedYear >= currentYear" />
+      <Button label="Cadastrar planejamento anual" severity="info" @click="addPlanner" class="mb-3 justify-content-end" v-if="selectedYear >= currentYear && this.isAdmin" />
     </div>
     <div v-for="(planner, index) in planners" :key="planner.id" class="mb-3">
       <Panel toggleable>
@@ -36,7 +36,7 @@
           </div>
         </template>
         <template #icons>
-          <button class="p-panel-header-icon p-link mr-2" @click="toggle($event, index)">
+          <button class="p-panel-header-icon p-link mr-2" @click="toggle($event, index)" v-if="this.isAdmin">
             <span class="pi pi-cog"></span>
           </button>
           <Menu ref="menuPlanner" id="config_menu" :model="items" popup>
@@ -117,9 +117,11 @@ export default {
       },
       selectedYear: null,
       isLoading: false,
+      isAdmin: false,
     };
   },
   created() {
+    this.isAdmin = this.$store.state.user.admin;
     this.selectedYear = this.currentYear;
     this.initialMethods();
   },

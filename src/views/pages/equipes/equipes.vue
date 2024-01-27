@@ -19,7 +19,7 @@
     <template #header>
       <div class="flex flex-wrap align-items-center justify-content-between gap-2">
         <span class="text-xl text-900 font-bold">Equipes</span>
-        <Button label="Cadastrar equipes" severity="info" @click="addTeam" />
+        <Button label="Cadastrar equipes" severity="info" @click="addTeam" v-if="this.isAdmin" />
       </div>
     </template>
 
@@ -36,7 +36,7 @@
       </template>
     </Column> -->
 
-    <Column  header="Ações" :rowEditor="true" style="width: 10%; min-width: 8rem" bodyStyle="text-align:center">
+    <Column  header="Ações" :rowEditor="true" style="width: 10%; min-width: 8rem" bodyStyle="text-align:center" v-if="this.isAdmin">
       <template #body="slotProps">
         <Button icon="pi pi-pencil" outlined rounded class="mr-2" @click="editTeam(slotProps.data)" />
         <Button icon="pi pi-trash" outlined rounded severity="danger" @click="confirmDeleteTeam(slotProps.data)" />
@@ -93,9 +93,11 @@ export default {
       confirm: useConfirm(),
       idcompany: null,
       isLoading: false,
+      isAdmin: false
     };
   },
   async created() {
+    this.isAdmin = this.$store.state.user.admin;
     await this.initialMethods();
   },
   methods: {

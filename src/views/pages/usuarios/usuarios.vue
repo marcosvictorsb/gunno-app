@@ -21,7 +21,7 @@
     <template #header>
         <div class="flex flex-wrap align-items-center justify-content-between gap-2">
             <span class="text-xl text-900 font-bold">Usuários</span>
-            <Button label="Cadastrar usuário" severity="info" @click="addUser" />
+            <Button label="Cadastrar usuário" severity="info" @click="addUser" v-if="this.isAdmin" />
         </div>
     </template>
 
@@ -35,7 +35,7 @@
               <InputText v-model="data[field]" />
           </template>
       </Column>
-      <Column  header="Ações" :rowEditor="true" style="width: 10%; min-width: 8rem" bodyStyle="text-align:center">
+      <Column  header="Ações" :rowEditor="true" style="width: 10%; min-width: 8rem" bodyStyle="text-align:center" v-if="this.isAdmin">
         <template #body="slotProps">           
             <Button icon="pi pi-pencil" outlined rounded class="mr-2" @click="editUser(slotProps.data)" />
             <Button icon="pi pi-trash" outlined rounded severity="danger" @click="confirmDeleteUser(slotProps.data)" />
@@ -109,10 +109,12 @@ export default {
       toast: useToast(),
       confirm: useConfirm(),
       isLoading: false,
-      idcompany: null
+      idcompany: null,
+      isAdmin: false
     };
   },
   async created() {
+    this.isAdmin = this.$store.state.user.admin;
     await this.initialMethods();
   },
   methods: {

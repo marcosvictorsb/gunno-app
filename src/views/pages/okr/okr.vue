@@ -82,7 +82,20 @@
         <template #body="slotProps">
             <Button icon="pi pi-pencil" outlined rounded class="mr-2" @click="editResultKey(slotProps.data)" />
             <Button icon="pi pi-trash" outlined rounded severity="danger" @click="confirmDeleteResultKey(slotProps.data)" />
-          </template>
+        </template>
+
+        <!-- <template #body>
+            <Button type="button" icon="pi pi-cog" rounded />
+            <Button type="button" icon="pi pi-ellipsis-v" @click="toggle($event, index)" aria-haspopup="true" aria-controls="overlay_menu" size="small"/>
+            <Menu ref="menuPlanner" id="overlay_menu" :model="items" popup>
+              <template #item="{ item, props }">
+                <a v-ripple :href="item.url" :target="item.target" v-bind="props.action" @click="action(okr)">
+                  <span :class="item.icon" />
+                  <span class="ml-2">{{ item.label }}</span>
+                </a>
+              </template>
+            </Menu>
+        </template> -->
       </Column>
     </DataTable>
     <Toast />
@@ -174,6 +187,7 @@ import ProgressBar from 'primevue/progressbar';
 import ConfirmDialog from 'primevue/confirmdialog';
 import Divider from 'primevue/divider';
 import Fieldset from 'primevue/fieldset';
+import Menu from 'primevue/menu';
 import Loading from '../../../components/loading/loading.vue';
 import OkrService from '../../../service/OkrService';
 import UserService from '../../../service/UserService';
@@ -194,7 +208,8 @@ export default {
     ConfirmDialog,
     Divider,
     Fieldset,
-    Loading
+    Loading,
+    Menu
   },
   data() {
     return {
@@ -226,13 +241,45 @@ export default {
       currentYear: new Date().getFullYear(),
       teams: [],
       selectedTeam: null,
-      disableDropdownUser: true
+      disableDropdownUser: true,
+      menus: [],
+      items: [
+        {
+          label: 'Editar',
+          icon: 'pi pi-pencil',
+          command: () => {
+            this.editResultKey();
+          }
+        },
+        {
+          separator: true
+        },
+        {
+          label: 'Deletar',
+          icon: 'pi pi-times',
+          command: () => {
+            this.deletePlanner();
+          }
+        }
+      ],
     };
   },
   async created() {
     await this.initialMethods();
   },
   mounted() {
+    this.$nextTick(() => {
+      console.log('chegou no mounted');
+      this.menus = [];
+      console.log(this.okrs);
+      this.okrs.resultKeys.forEach((planner, index) => {
+        const menuRef = this.$refs.menuPlanner[index];
+        if (menuRef) {
+          this.menus.push(menuRef);
+        }
+      });
+    });
+
     eventBus.on('evento-okr-clicado', this.getOkr);
   },
   watch: {
@@ -470,7 +517,16 @@ export default {
         this.okrs = null;
         this.isLoading = false;
       }
-    }
+    },
+    toggle(event, index) {
+      console.log(index);
+      const menuRef = this.$refs.menuPlanner[index];
+      if (menuRef) {
+        menuRef.toggle(event);
+      } else {
+        console.error(`Menu reference not found for index ${index}`);
+      }
+    },
   }
 };
 </script>
