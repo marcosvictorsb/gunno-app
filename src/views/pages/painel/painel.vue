@@ -49,9 +49,9 @@ export default {
         this.isLoading = true;
         const idcompany = this.$store.state.user.idcompany;
         const { body } = (await ConfigService.getByIdCompany(idcompany)).data;
-        const config = body.result[0];
-        this.showOKRsResultKey = config.showOKRsResultKey === 1 ? true : false;
-        this.showBtnMeasureOKR = config.showBtnMeasureOKR === 1 ? true : false;
+        const config = body.result;
+        this.showOKRsResultKey = config.showOKRsResultKey;
+        this.showBtnMeasureOKR = config.showBtnMeasureOKR;
         this.isLoading = false;
       } catch (error) {
         console.log(error);
