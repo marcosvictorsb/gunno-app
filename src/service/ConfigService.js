@@ -12,8 +12,12 @@ class ConfigService {
     };
   }
 
-  async created(payload) {
-    return await this.api.post('/config', payload, this.config);
+  async save(config) {
+    return await this.api.post('/config', config, this.config);
+  }
+
+  async update(idcompany, config) {
+    return await this.api.put(`/config/company/${idcompany}`, config, this.config);
   }
 
   async getByIdCompany(id) {
