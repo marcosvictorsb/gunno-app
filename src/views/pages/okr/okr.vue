@@ -5,7 +5,7 @@
   </div>
   <div class="flex justify-content-between mb-3">
       <h3>OKRs - {{ selectedYear }} / {{  selectedQuarter }}</h3>
-      <Button label="Criar OKR" severity="info" @click="addOKR" size="small" v-if="selectedYear >= currentYear"/>    
+      <Button label="Criar OKR" severity="info" @click="addOKR" size="small" v-if="selectedYear >= currentYear && showOKRsResultKey" />    
   </div>
   
   <Loading :is-loading="isLoading"/>
@@ -32,14 +32,14 @@
         <div class="flex flex-wrap align-items-center justify-content-between gap-2">
             <span class="text-xl text-900 font-bold">{{ okr.name }}</span>
             <div>
-              <Button label="Cadastrar resultados chaves" severity="info" @click="addResultKey(okr.id)" size="small" class="mr-3"/>
-              <Button label="Deletar OKR" icon="pi pi-trash" severity="danger" @click="deleteOKR(okr.id)" size="small"/>
+              <Button label="Cadastrar resultados chaves" severity="info" @click="addResultKey(okr.id)" size="small" class="mr-3" v-if="showOKRsResultKey"/>
+              <Button label="Deletar OKR" icon="pi pi-trash" severity="danger" @click="deleteOKR(okr.id)" size="small" v-if="showOKRsResultKey"/>
             </div>            
         </div>
     </template>
     <template #empty> Sem registros disponíveis para exibição </template>
 
-      <Column field="name" header="Resultados chaves" style="width: 35%">
+      <Column field="name" header="Resultados chaves" style="width: 30%">
           <template #editor="{ data, field }">
               <InputText v-model="data[field]" />
           </template>
@@ -78,24 +78,12 @@
           </template>
       </Column>
 
-      <Column  header="Ações" :rowEditor="true" style="width: 10%; min-width: 8rem" bodyStyle="text-align:center">
+      <Column  header="Ações" :rowEditor="true" style="width: 15%; min-width: 8rem" bodyStyle="text-align:center" v-if="showOKRsResultKey || showBtnMeasureOKR">
         <template #body="slotProps">
-            <Button icon="pi pi-pencil" outlined rounded class="mr-2" @click="editResultKey(slotProps.data)" />
-            <Button icon="pi pi-trash" outlined rounded severity="danger" @click="confirmDeleteResultKey(slotProps.data)" />
-        </template>
-
-        <!-- <template #body>
-            <Button type="button" icon="pi pi-cog" rounded />
-            <Button type="button" icon="pi pi-ellipsis-v" @click="toggle($event, index)" aria-haspopup="true" aria-controls="overlay_menu" size="small"/>
-            <Menu ref="menuPlanner" id="overlay_menu" :model="items" popup>
-              <template #item="{ item, props }">
-                <a v-ripple :href="item.url" :target="item.target" v-bind="props.action" @click="action(okr)">
-                  <span :class="item.icon" />
-                  <span class="ml-2">{{ item.label }}</span>
-                </a>
+            <Button icon="pi pi-pencil" outlined raised class="mr-2" @click="editResultKey(slotProps.data)" size="small" v-tooltip.top="{ value: 'Editar resultado chave', showDelay: 500, hideDelay: 300 }"  v-if="showOKRsResultKey" />
+            <Button icon="pi-chevron-up" outlined raised class="mr-2" severity="info" @click="measeureResultKey(slotProps.data)"  size="small" v-tooltip.top="{ value: 'Medição do resultado chave', showDelay: 500, hideDelay: 300 }"  v-if="showBtnMeasureOKR" />
+            <Button icon="pi pi-trash" outlined raised severity="danger" @click="confirmDeleteResultKey(slotProps.data)" size="small" v-tooltip.top="{ value: 'Excluir resultado chave', showDelay: 500, hideDelay: 300 }"  v-if="showOKRsResultKey" />                          
               </template>
-            </Menu>
-        </template> -->
       </Column>
     </DataTable>
     <Toast />
@@ -187,13 +175,13 @@ import ProgressBar from 'primevue/progressbar';
 import ConfirmDialog from 'primevue/confirmdialog';
 import Divider from 'primevue/divider';
 import Fieldset from 'primevue/fieldset';
-import Menu from 'primevue/menu';
 import Loading from '../../../components/loading/loading.vue';
 import OkrService from '../../../service/OkrService';
 import UserService from '../../../service/UserService';
 import ResultKeyService from '../../../service/ResultKeyService';
 import TeamService from '../../../service/TeamService';
 import TeamUserService from '../../../service/TeamUserService';
+import ConfigService from '../../../service/ConfigService';
 import { getCurrentQuarter, getCurrentYear } from '../../../helpers/quarterYears';
 import { useToast } from 'primevue/usetoast';
 import { useConfirm } from 'primevue/useconfirm';
@@ -208,8 +196,7 @@ export default {
     ConfirmDialog,
     Divider,
     Fieldset,
-    Loading,
-    Menu
+    Loading
   },
   data() {
     return {
@@ -242,48 +229,23 @@ export default {
       teams: [],
       selectedTeam: null,
       disableDropdownUser: true,
-      menus: [],
-      items: [
-        {
-          label: 'Editar',
-          icon: 'pi pi-pencil',
-          command: () => {
-            this.editResultKey();
-          }
-        },
-        {
-          separator: true
-        },
-        {
-          label: 'Deletar',
-          icon: 'pi pi-times',
-          command: () => {
-            this.deletePlanner();
-          }
-        }
-      ],
+      showOKRsResultKey: null,
+      showBtnMeasureOKR: null,
     };
   },
   async created() {
+    const { body } = (await ConfigService.getByIdCompany(this.$store.state.user.idcompany)).data;
+    const config = body.result;
+    this.showOKRsResultKey = config.showOKRsResultKey;
+    this.showBtnMeasureOKR = config.showBtnMeasureOKR;
     await this.initialMethods();
   },
   mounted() {
-    this.$nextTick(() => {
-      console.log('chegou no mounted');
-      this.menus = [];
-      console.log(this.okrs);
-      this.okrs.resultKeys.forEach((planner, index) => {
-        const menuRef = this.$refs.menuPlanner[index];
-        if (menuRef) {
-          this.menus.push(menuRef);
-        }
-      });
-    });
-
     eventBus.on('evento-okr-clicado', this.getOkr);
   },
   watch: {
-    async selectedTeam(newTeam, oldTeam) {
+    // eslint-disable-next-line no-unused-vars
+    async selectedTeam(newTeam, _oldTeam) {
       if (newTeam != null) {
         this.disableDropdownUser = false;
         this.users = [];
@@ -518,15 +480,9 @@ export default {
         this.isLoading = false;
       }
     },
-    toggle(event, index) {
-      console.log(index);
-      const menuRef = this.$refs.menuPlanner[index];
-      if (menuRef) {
-        menuRef.toggle(event);
-      } else {
-        console.error(`Menu reference not found for index ${index}`);
-      }
-    },
+    async measeureResultKey(resultKey) {
+      console.log(resultKey);
+    }
   }
 };
 </script>
