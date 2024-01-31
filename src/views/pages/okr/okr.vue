@@ -33,6 +33,7 @@
             <span class="text-xl text-900 font-bold">{{ okr.name }}</span>
             <div>
               <Button label="Cadastrar resultados chaves" severity="info" @click="addResultKey(okr.id)" size="small" class="mr-3" v-if="showOKRsResultKey"/>
+              <Button label="Editar OKR" @click="showModalOKR(okr)" size="small" class="mr-3" v-if="showOKRsResultKey"/>
               <Button label="Deletar OKR" icon="pi pi-trash" severity="danger" @click="deleteOKR(okr.id)" size="small" v-if="showOKRsResultKey"/>
             </div>            
         </div>
@@ -97,11 +98,32 @@
         <InputText id="name" v-model.trim="okrName" required="true" autofocus :class="{'p-invalid': submitted && !okrName}" />
         <small class="p-error" v-if="submitted && !okrName">Objetivo é obrigátório</small>
       </div>
+
+      <div class="field">
+        <label for="equipe">Equipe</label>
+        <Dropdown v-model="selectedTeam" :options="teams" showClear filter optionLabel="name" placeholder="Selecione uma equipe" :class="{ 'p-invalid': hasErrorSelectedTeam }" class="w-full md">          
+          <template #value="slotProps">
+              <div v-if="slotProps.value" class="flex align-items-center">
+                  <div>{{ slotProps.value.name }}</div>
+              </div>
+              <span v-else>
+                  {{ slotProps.placeholder }}
+              </span>
+          </template>
+          <template #option="slotProps">
+              <div class="flex align-items-center">
+                  <div>{{ slotProps.option.name }}</div>
+              </div>
+          </template>
+        </Dropdown>
+        <small class="p-error" v-if="hasErrorSelectedTeam">Equipe é obrigatório</small>
+      </div>
+
       <template #footer>
         
         <Button label="Cancelar" icon="pi pi-times" text @click="hideDialog" />
-        <!-- <Button label="Editar" icon="pi pi-check" text @click="saveTeamEdited" v-if="isEditTeam"/> -->
-        <Button label="Salvar" icon="pi pi-check" text @click="saveOkr" />
+        <Button label="Editar" icon="pi pi-check" text @click="saveOKREdited" v-if="isEditOKR"/>
+        <Button label="Salvar" icon="pi pi-check" text @click="saveOkr" v-if="!isEditOKR"/>
       </template>
     </Dialog>
   </div>
@@ -134,32 +156,12 @@
       </div>
 
       <div class="field">
-        <label for="equipe">Equipe</label>
-        <Dropdown v-model="selectedTeam" :options="teams" filter optionLabel="name" placeholder="Selecione uma equipe" class="w-full md">
-          <template #value="slotProps">
-              <div v-if="slotProps.value" class="flex align-items-center">
-                  <div>{{ slotProps.value.name }}</div>
-              </div>
-              <span v-else>
-                  {{ slotProps.placeholder }}
-              </span>
-          </template>
-          <template #option="slotProps">
-              <div class="flex align-items-center">
-                  <div>{{ slotProps.option.name }}</div>
-              </div>
-          </template>
-        </Dropdown>
-      </div>
-
-      <div class="field">
         <label for="equipe">Responsável</label>
         <Dropdown :disabled="disableDropdownUser" v-model="selectedUser" :options="users" filter optionLabel="name" placeholder="Selecione um responsavel" class="w-full md" required="true" autofocus :class="{'p-invalid': submitted && (!selectedUser ||Object.keys(selectedUser).length === 0)}"/>
         <small class="p-error" v-if="submitted && (!selectedUser ||Object.keys(selectedUser).length === 0)">Responsável é obrigatório</small>
       </div>
 
       <template #footer>
-        
         <Button label="Cancelar" icon="pi pi-times" text @click="hideResultkeyDialog" />
         <Button label="Editar" icon="pi pi-check" text @click="saveResultKeyEdited" v-if="isEditResultKey"/>
         <Button label="Salvar" icon="pi pi-check" text @click="saveResultKey" v-if="!isEditResultKey"  :disabled="resultkey.valueCurrent > resultkey.valueTarget" />
@@ -203,6 +205,7 @@ export default {
       okrDialog: false,
       okrName: null,
       okrs: [],
+      okr: null,
       resultkeys: [],
       resultkey: {},
       resultkeyDialog: false,
@@ -221,7 +224,6 @@ export default {
       idcompany: null,
       legend: `No quarter atual não temos okr cadastradas ainda`,
       isLoading: false,
-      years: [{ name: '2023' }, { name: '2022' }, { name: '2021' }, { name: '2020' }],
       year: null,
       selectedYear: null,
       selectedQuarter: null,
@@ -231,13 +233,11 @@ export default {
       disableDropdownUser: true,
       showOKRsResultKey: null,
       showBtnMeasureOKR: null,
+      isEditOKR: false,
+      hasErrorSelectedTeam: false
     };
   },
   async created() {
-    const { body } = (await ConfigService.getByIdCompany(this.$store.state.user.idcompany)).data;
-    const config = body.result;
-    this.showOKRsResultKey = config.showOKRsResultKey;
-    this.showBtnMeasureOKR = config.showBtnMeasureOKR;
     await this.initialMethods();
   },
   mounted() {
@@ -266,6 +266,9 @@ export default {
       this.loading = false;
       this.submitted = false;
       this.selectedTeam = null;
+      this.okrName = null;
+      this.isEditOKR = false;
+      this.hasErrorSelectedTeam = false;
     },
     hideDialog() {
       this.okrDialog = false;
@@ -274,8 +277,8 @@ export default {
     async saveOkr() {
       try {
         this.submitted = true;
-        if (!this.okrName) return;
-        const payload = { name: this.okrName, idcompany: this.idcompany };
+        if (!this.isFormOKRValid()) return;
+        const payload = { name: this.okrName, idcompany: this.idcompany, teamId: this.selectedTeam.id };
         await OkrService.created(payload);
         this.toast.add({ severity: 'success', detail: 'Objetivo criado', life: 3000 });
         this.okrDialog = false;
@@ -285,23 +288,16 @@ export default {
         this.toast.add({ severity: 'error', sdetail: 'Error ao editar o objetivo', life: 3000 });
       }
     },
-    async initialMethods() {
+    async getObjectiveByQuarter() {
       try {
-        this.isLoading = true;
         const userStore = this.$store.state.user;
         this.idcompany = userStore.idcompany;
         const quarter = getCurrentQuarter();
         this.selectedQuarter = quarter;
         this.selectedYear = getCurrentYear();
-
         const { data } = await OkrService.getObjectiveByQuarter(quarter, this.idcompany);
         this.resultObjectives = data.result;
         this.okrs = this.mapperProgressValue(this.resultObjectives);
-
-        const { body: bodyTeam } = (await TeamService.getTeams(this.idcompany)).data;
-        this.teams = bodyTeam.result.teams;
-
-        this.isLoading = false;
       } catch (error) {
         this.isLoading = false;
         if (error.response.status === 404) {
@@ -309,6 +305,34 @@ export default {
         }
         console.log(error);
       }
+    },
+    async getTeams() {
+      try {
+        const { body: bodyTeam } = (await TeamService.getTeams(this.idcompany)).data;
+        this.teams = bodyTeam.result.teams;
+      } catch (error) {
+        if (error.response.status === 404) {
+          return (this.okrs = []);
+        }
+        console.log(error);
+      }
+    },
+    async getConfigs() {
+      try {
+        const { body } = (await ConfigService.getByIdCompany(this.$store.state.user.idcompany)).data;
+        const config = body.result;
+        this.showOKRsResultKey = config.showOKRsResultKey;
+        this.showBtnMeasureOKR = config.showBtnMeasureOKR;
+      } catch (error) {
+        console.log(error);
+      }
+    },
+    async initialMethods() {
+      this.isLoading = true;
+      await this.getObjectiveByQuarter();
+      await this.getTeams();
+      await this.getConfigs();
+      this.isLoading = false;
     },
     mapperProgressValue(resultObjectives) {
       return Object.keys(resultObjectives).reduce((acc, key) => {
@@ -346,10 +370,9 @@ export default {
           ...this.resultkey,
           objectiveId: this.idObjectives,
           userId: this.selectedUser.id,
-          companyId: this.idcompany,
-          teamId: this.selectedTeam.id
+          companyId: this.idcompany
         };
-        if (!this.isFormValid(payload)) return;
+        if (!this.isFormResultKeyValid(payload)) return;
         await (
           await ResultKeyService.created(payload)
         ).data;
@@ -375,9 +398,7 @@ export default {
         this.resultkeyDialog = true;
         this.isEditResultKey = true;
         const { body: bodyUser } = (await UserService.getById(this.resultkey.userId)).data;
-        const { body: bodyTeam } = (await TeamService.getAllTeamsByID(this.resultkey.teamId)).data;
         this.selectedUser = bodyUser.result;
-        this.selectedTeam = bodyTeam.result;
         this.disableDropdownUser = false;
         this.loading = false;
       } catch (error) {
@@ -417,10 +438,9 @@ export default {
           valueCurrent: this.resultkey.valueCurrent,
           objectiveId: this.resultkey.objectiveId,
           userId: this.selectedUser.id,
-          teamId: this.selectedTeam.id,
           companyId: this.idcompany
         };
-        if (!this.isFormValid(payload)) return;
+        if (!this.isFormResultKeyValid(payload)) return;
         await ResultKeyService.edit(this.resultkey.id, payload);
         this.resultkeyDialog = false;
         this.toast.add({ severity: 'success', detail: 'Resultado chave editado', life: 3000 });
@@ -452,8 +472,8 @@ export default {
         }
       });
     },
-    isFormValid(payload) {
-      const hasIsValid = payload.companyId && payload.objectiveId && payload.userId && payload.teamId;
+    isFormResultKeyValid(payload) {
+      const hasIsValid = payload.companyId && payload.objectiveId && payload.userId;
       const hasValueString = payload.name.length > 0;
       const valueGreaterThaZero = payload.initialValue >= 0 && payload.valueCurrent >= 0 && payload.valueTarget >= 0;
       return payload && hasIsValid && hasValueString && valueGreaterThaZero;
@@ -480,8 +500,37 @@ export default {
         this.isLoading = false;
       }
     },
+    async showModalOKR(okr) {
+      this.loading = true;
+      this.okrDialog = true;
+      this.okrName = okr.name;
+      this.okr = okr;
+      this.isEditOKR = true;
+      const { body } = (await TeamService.getAllTeamsByID(okr.teamId)).data;
+      this.selectedTeam = body.result;
+      this.loading = false;
+    },
     async measeureResultKey(resultKey) {
       console.log(resultKey);
+    },
+    isFormOKRValid() {
+      if (!this.okrName) false;
+      this.hasErrorSelectedTeam = this.selectedTeam === null ? true : false;
+      return !this.hasErrorSelectedTeam && true;
+    },
+    async saveOKREdited() {
+      try {
+        this.submitted = true;
+        if (!this.isFormOKRValid()) return;
+        const payload = { name: this.okrName, idcompany: this.idcompany, teamId: this.selectedTeam.id };
+        await OkrService.edit(payload, this.okr.id);
+        this.toast.add({ severity: 'success', detail: 'Objetivo criado', life: 3000 });
+        this.okrDialog = false;
+        await this.initialMethods();
+      } catch (error) {
+        console.log(error);
+        this.toast.add({ severity: 'error', sdetail: 'Error ao editar o objetivo', life: 3000 });
+      }
     }
   }
 };
