@@ -362,6 +362,8 @@ export default {
       this.idObjectives = idObjectives;
       this.resultkeyDialog = true;
       this.selectedTeam = {};
+      const { body } = (await UserService.getAllUser(this.idcompany)).data;
+      this.users = body.result.users;
     },
     async saveResultKey() {
       try {
@@ -393,12 +395,13 @@ export default {
       try {
         this.loading = true;
         this.selectedUser = null;
-        this.selectedTeam = null;
         this.resultkey = resultkey;
         this.resultkeyDialog = true;
         this.isEditResultKey = true;
-        const { body: bodyUser } = (await UserService.getById(this.resultkey.userId)).data;
-        this.selectedUser = bodyUser.result;
+        const { body } = (await UserService.getAllUser(this.idcompany)).data;
+        this.users = body.result.users;
+        this.user = this.users.filter((user) => user.id === this.resultkey.userId);
+        this.selectedUser = this.user[0];
         this.disableDropdownUser = false;
         this.loading = false;
       } catch (error) {

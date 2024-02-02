@@ -61,7 +61,7 @@ export default {
       const idcompany = userStore.idcompany;
       const options = {
         year: this.selectedYear ? this.selectedYear.name : null,
-        team: this.selectedTeams ? this.selectedTeams.name : null,
+        team: this.selectedTeams ? this.selectedTeams.id : null,
         quarter: this.selectedQuarter ? this.selectedQuarter.name : null,
         idcompany
       };
@@ -95,7 +95,7 @@ export default {
   /* position: fixed; */
   position: absolute;
   width: 300px;
-  z-index: 999;
+  z-index: 1;
   overflow-y: auto;
   user-select: none;
   top: 31.3rem;
