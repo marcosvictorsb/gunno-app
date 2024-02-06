@@ -100,6 +100,7 @@ import TreeSelect from 'primevue/treeselect';
 import TreeTable from 'primevue/treetable';
 import TriStateCheckbox from 'primevue/tristatecheckbox';
 import VirtualScroller from 'primevue/virtualscroller';
+import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
 
 import BlockViewer from '@/components/BlockViewer.vue';
 
@@ -121,6 +122,7 @@ app.directive('badge', BadgeDirective);
 app.directive('ripple', Ripple);
 app.directive('styleclass', StyleClass);
 
+app.component('font-awesome-icon', FontAwesomeIcon);
 app.component('BlockViewer', BlockViewer);
 
 app.component('Accordion', Accordion);

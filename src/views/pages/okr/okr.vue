@@ -82,7 +82,13 @@
       <Column  header="Ações" :rowEditor="true" style="width: 15%; min-width: 8rem" bodyStyle="text-align:center" v-if="showOKRsResultKey || showBtnMeasureOKR">
         <template #body="slotProps">
             <Button icon="pi pi-pencil" outlined raised class="mr-2" @click="editResultKey(slotProps.data)" size="small" v-tooltip.top="{ value: 'Editar resultado chave', showDelay: 500, hideDelay: 300 }"  v-if="showOKRsResultKey" />
-            <Button icon="pi-chevron-up" outlined raised class="mr-2" severity="info" @click="measeureResultKey(slotProps.data)"  size="small" v-tooltip.top="{ value: 'Medição do resultado chave', showDelay: 500, hideDelay: 300 }"  v-if="showBtnMeasureOKR" />
+            <Button icon="material-symbols-outlined" style="height: 35px;"  outlined raised class="mr-2" severity="info" @click="showMeaseureModal(slotProps.data)"  size="small" v-tooltip.top="{ value: 'Medição do resultado chave', showDelay: 500, hideDelay: 300 }"  v-if="showBtnMeasureOKR" >
+              <template #icon>
+                <span class="material-symbols-outlined">
+                  monitoring
+                </span>
+              </template>
+            </Button>
             <Button icon="pi pi-trash" outlined raised severity="danger" @click="confirmDeleteResultKey(slotProps.data)" size="small" v-tooltip.top="{ value: 'Excluir resultado chave', showDelay: 500, hideDelay: 300 }"  v-if="showOKRsResultKey" />                          
               </template>
       </Column>
@@ -138,21 +144,30 @@
       
       <div class="field">
         <label for="valorInicial">Valor Inicial</label>
-        <InputNumber id="valorInicial" v-model="resultkey.initialValue" required="true" autofocus :class="{'p-invalid': submitted && resultkey.initialValue < 0}" />
-        <small class="p-error" v-if="submitted && resultkey.initialValue < 0">Valor inicial é obrigatório</small>
+        <InputGroup>
+          <InputNumber id="valorInicial" v-model="resultkey.initialValue" required="true" autofocus :class="{'p-invalid': submitted && resultkey.initialValue < 0}" />
+          <small class="p-error" v-if="submitted && resultkey.initialValue < 0">Valor inicial é obrigatório</small>
+          <InputGroupAddon>%</InputGroupAddon>
+        </InputGroup>
       </div>
 
       <div class="field">
         <label for="valorAlvo">Valor Alvo</label>
-        <InputNumber id="valorAlvo" v-model="resultkey.valueTarget" required="true" autofocus :class="{'p-invalid': submitted && resultkey.valueTarget < 0}" />
-        <small class="p-error" v-if="submitted && resultkey.valueTarget < 0">Valor alvo é obrigatório</small>
+        <InputGroup>
+          <InputNumber id="valorAlvo" v-model="resultkey.valueTarget" required="true" autofocus :class="{'p-invalid': submitted && resultkey.valueTarget < 0}" />
+          <small class="p-error" v-if="submitted && resultkey.valueTarget < 0">Valor alvo é obrigatório</small>
+          <InputGroupAddon>%</InputGroupAddon>
+        </InputGroup>
       </div>
 
       <div class="field">
         <label for="valorAtual">Valor Atual</label>
-        <InputNumber id="valorAtual" v-model="resultkey.valueCurrent" required="true" autofocus :class="{'p-invalid': submitted && resultkey.valueCurrent < 0}" />
-        <small class="p-error" v-if="submitted && resultkey.valueCurrent < 0">Valor atual é obrigatório</small>
-        <small class="p-error" v-if="resultkey.valueCurrent > resultkey.valueTarget">Valor Atual não pode ser maior que o Valor Alvo</small>
+        <InputGroup>
+          <InputNumber id="valorAtual" v-model="resultkey.valueCurrent" required="true" autofocus :class="{'p-invalid': submitted && resultkey.valueCurrent < 0}" />
+          <small class="p-error" v-if="submitted && resultkey.valueCurrent < 0">Valor atual é obrigatório</small>
+          <small class="p-error" v-if="resultkey.valueCurrent > resultkey.valueTarget">Valor Atual não pode ser maior que o Valor Alvo</small>
+          <InputGroupAddon>%</InputGroupAddon>
+        </InputGroup>
       </div>
 
       <div class="field">
@@ -168,6 +183,38 @@
       </template>
     </Dialog>
   </div>
+
+  <div id="modal-mensure">
+    <Dialog v-model:visible="mensureDialog" header="Medição do resultado chave" :modal="true" class="p-fluid" :style="{width: '750px'}">
+      
+      <div class="field">
+        <label for="resultadoChave">Resultado Chaves</label>
+        <InputText id="resultadoChave" v-model.trim="resultkeyName" required="true" autofocus disabled />
+      </div>
+
+      <div class="field">
+        <label for="valorAtual">Valor Atual</label>
+        <InputGroup>
+          <InputNumber id="valorAtual" v-model="valueCurrent" required="true" autofocus  disabled />
+          <InputGroupAddon>%</InputGroupAddon>
+        </InputGroup>   
+      </div>      
+      
+      <div class="field">
+        <label for="valorAtual">Novo Valor Atual</label>
+        <InputGroup>            
+          <InputNumber id="valorAtual" v-model="valueMensure" required="true" autofocus :class="{'p-invalid': submitted && valueMensure < 0}" />
+          <small class="p-error" v-if="submitted && valueMensure < 0">Valor atual é obrigatório</small>          
+          <InputGroupAddon>%</InputGroupAddon>
+        </InputGroup>   
+      </div>             
+
+      <template #footer>
+        <Button label="Cancelar" icon="pi pi-times" text @click="hideMensureDialog" />
+        <Button label="Salvar" icon="pi pi-check" text @click="saveMensure" :disabled="valueMensure >= valueTarget" />
+      </template>
+    </Dialog>
+  </div>
 </template>
 <script>
 import DataTable from 'primevue/datatable';
@@ -177,11 +224,14 @@ import ProgressBar from 'primevue/progressbar';
 import ConfirmDialog from 'primevue/confirmdialog';
 import Divider from 'primevue/divider';
 import Fieldset from 'primevue/fieldset';
+import InputGroup from 'primevue/inputgroup';
+import InputGroupAddon from 'primevue/inputgroupaddon';
 import Loading from '../../../components/loading/loading.vue';
 import OkrService from '../../../service/OkrService';
 import UserService from '../../../service/UserService';
 import ResultKeyService from '../../../service/ResultKeyService';
 import TeamService from '../../../service/TeamService';
+import MensureService from '../../../service/MensureService';
 import TeamUserService from '../../../service/TeamUserService';
 import ConfigService from '../../../service/ConfigService';
 import { getCurrentQuarter, getCurrentYear } from '../../../helpers/quarterYears';
@@ -198,7 +248,9 @@ export default {
     ConfirmDialog,
     Divider,
     Fieldset,
-    Loading
+    Loading,
+    InputGroup,
+    InputGroupAddon
   },
   data() {
     return {
@@ -234,7 +286,14 @@ export default {
       showOKRsResultKey: null,
       showBtnMeasureOKR: null,
       isEditOKR: false,
-      hasErrorSelectedTeam: false
+      hasErrorSelectedTeam: false,
+      mensureDialog: false,
+      valueMensure: null,
+      valueMensureTarget: null,
+      valueCurrent: null,
+      resultkeyName: null,
+      valueTarget: null,
+      IdResultKey: null
     };
   },
   async created() {
@@ -513,8 +572,22 @@ export default {
       this.selectedTeam = body.result;
       this.loading = false;
     },
-    async measeureResultKey(resultKey) {
-      console.log(resultKey);
+    async showMeaseureModal(resultKey) {
+      this.isLoading = true;
+      this.mensureDialog = true;
+      this.resultkeyName = resultKey.name;
+      this.valueCurrent = resultKey.valueCurrent;
+      this.valueTarget = resultKey.valueTarget;
+      this.IdResultKey = resultKey.id;
+      this.isLoading = false;
+    },
+    hideMensureDialog() {
+      this.mensureDialog = false;
+      this.valueMensure = null;
+      this.resultkeyName = null;
+      this.valueCurrent = null;
+      this.valueTarget = null;
+      this.IdResultKey = null;
     },
     isFormOKRValid() {
       if (!this.okrName) false;
@@ -533,6 +606,21 @@ export default {
       } catch (error) {
         console.log(error);
         this.toast.add({ severity: 'error', sdetail: 'Error ao editar o objetivo', life: 3000 });
+      }
+    },
+    async saveMensure() {
+      try {
+        const payload = {
+          valueCurrent: this.valueMensure,
+          resultKeyId: this.IdResultKey
+        };
+        const result = await MensureService.save(payload);
+        this.toast.add({ severity: 'success', detail: 'Medição feita', life: 3000 });
+        this.mensureDialog = false;
+        await this.initialMethods();
+      } catch (error) {
+        console.log(error);
+        this.toast.add({ severity: 'error', sdetail: 'Erro ao salvar o valor da medição', life: 3000 });
       }
     }
   }

@@ -8,6 +8,7 @@
         "lint": "eslint . --ext .vue,.js,.jsx,.cjs,.mjs --fix --ignore-path .gitignore"
     },
     "dependencies": {
+        "@fortawesome/vue-fontawesome": "^3.0.6",
         "axios": "^1.6.2",
         "chart.js": "3.3.2",
         "mitt": "^3.0.1",
