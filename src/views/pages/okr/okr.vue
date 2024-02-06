@@ -138,36 +138,37 @@
     <Dialog v-model:visible="resultkeyDialog" :style="{width: '750px'}" header="Criar OKR" :modal="true" class="p-fluid">
       <div class="field">
         <label for="resultadoChave">Resultado Chaves</label>
-        <InputText id="resultadoChave" v-model.trim="resultkey.name" required="true" autofocus :class="{'p-invalid': submitted && !resultkey.name}" />
-        <small class="p-error" v-if="submitted && !resultkey.name">Resultado chave é obrigatório</small>
+        <InputText id="resultadoChave" v-model.trim="resultkeyNameCreated" required="true" autofocus :class="{'p-invalid': submitted && !resultkeyNameCreated}" />
+        <small class="p-error" v-if="submitted && !resultkeyNameCreated">Resultado chave é obrigatório</small>
       </div>
       
       <div class="field">
         <label for="valorInicial">Valor Inicial</label>
         <InputGroup>
-          <InputNumber id="valorInicial" v-model="resultkey.initialValue" required="true" autofocus :class="{'p-invalid': submitted && resultkey.initialValue < 0}" />
-          <small class="p-error" v-if="submitted && resultkey.initialValue < 0">Valor inicial é obrigatório</small>
-          <InputGroupAddon>%</InputGroupAddon>
+          <InputNumber id="valorInicial" v-model="resultkeyInitialValue" required="true" autofocus :class="{'p-invalid': submitted && resultkeyInitialValue < 0}" />          
+          <InputGroupAddon>%</InputGroupAddon>          
         </InputGroup>
+        <small class="p-error" v-if="submitted && resultkeyInitialValue < 0">Valor inicial é obrigatório</small>
+        <small class="p-error" v-if="submitted && resultkeyInitialValue === null">Valor inicial é obrigatório</small>
       </div>
 
       <div class="field">
         <label for="valorAlvo">Valor Alvo</label>
         <InputGroup>
-          <InputNumber id="valorAlvo" v-model="resultkey.valueTarget" required="true" autofocus :class="{'p-invalid': submitted && resultkey.valueTarget < 0}" />
-          <small class="p-error" v-if="submitted && resultkey.valueTarget < 0">Valor alvo é obrigatório</small>
-          <InputGroupAddon>%</InputGroupAddon>
+          <InputNumber id="valorAlvo" v-model="resultkeyValueTarget" required="true" autofocus :class="{'p-invalid': submitted && resultkeyValueTarget < 0}" />         
+          <InputGroupAddon>%</InputGroupAddon>         
         </InputGroup>
+        <small class="p-error" v-if="submitted && resultkeyValueTarget === null">Valor alvo é obrigatório</small>
       </div>
 
       <div class="field">
         <label for="valorAtual">Valor Atual</label>
         <InputGroup>
-          <InputNumber id="valorAtual" v-model="resultkey.valueCurrent" required="true" autofocus :class="{'p-invalid': submitted && resultkey.valueCurrent < 0}" />
-          <small class="p-error" v-if="submitted && resultkey.valueCurrent < 0">Valor atual é obrigatório</small>
-          <small class="p-error" v-if="resultkey.valueCurrent > resultkey.valueTarget">Valor Atual não pode ser maior que o Valor Alvo</small>
+          <InputNumber id="valorAtual" v-model="resultkeyValueCurrent" required="true" autofocus :class="{'p-invalid': submitted && resultkeyValueCurrent < 0}" />
           <InputGroupAddon>%</InputGroupAddon>
         </InputGroup>
+        <small class="p-error" v-if="resultkeyValueCurrent > resultkeyValueTarget">Valor Atual não pode ser maior que o Valor Alvo</small>
+        <small class="p-error" v-if="submitted && resultkeyValueTarget === null">Valor alvo é obrigatório</small>
       </div>
 
       <div class="field">
@@ -293,7 +294,11 @@ export default {
       valueCurrent: null,
       resultkeyName: null,
       valueTarget: null,
-      IdResultKey: null
+      IdResultKey: null,
+      resultkeyNameCreated: null,
+      resultkeyInitialValue: null,
+      resultkeyValueCurrent: null,
+      resultkeyValueTarget: null
     };
   },
   async created() {
@@ -421,16 +426,25 @@ export default {
       this.idObjectives = idObjectives;
       this.resultkeyDialog = true;
       this.selectedTeam = {};
+      this.resultkeyNameCreated = null;
+      this.resultkeyInitialValue = null;
+      this.resultkeyValueCurrent = null;
+      this.resultkeyValueTarget = null;
       const { body } = (await UserService.getAllUser(this.idcompany)).data;
       this.users = body.result.users;
     },
     async saveResultKey() {
       try {
         this.submitted = true;
+        console.log(!this.resultkeyNameCreated);
+        console.log(this.submitted && !this.resultkeyNameCreated);
         const payload = {
-          ...this.resultkey,
+          name: this.resultkeyNameCreated,
+          initialValue: this.resultkeyInitialValue,
+          valueCurrent: this.resultkeyValueCurrent,
+          valueTarget: this.resultkeyValueTarget,
           objectiveId: this.idObjectives,
-          userId: this.selectedUser.id,
+          userId: this.selectedUser ? this.selectedUser.id : null,
           companyId: this.idcompany
         };
         if (!this.isFormResultKeyValid(payload)) return;
@@ -493,6 +507,7 @@ export default {
     async saveResultKeyEdited() {
       try {
         this.submitted = true;
+        if (!this.isFormResultKeyValid(payload)) return;
         const payload = {
           name: this.resultkey.name,
           valueTarget: this.resultkey.valueTarget,
@@ -502,12 +517,12 @@ export default {
           userId: this.selectedUser.id,
           companyId: this.idcompany
         };
-        if (!this.isFormResultKeyValid(payload)) return;
         await ResultKeyService.edit(this.resultkey.id, payload);
         this.resultkeyDialog = false;
         this.toast.add({ severity: 'success', detail: 'Resultado chave editado', life: 3000 });
         this.initialMethods();
       } catch (error) {
+        console.log(error);
         this.resultkeyDialog = false;
         this.submitted = false;
       }
@@ -536,9 +551,10 @@ export default {
     },
     isFormResultKeyValid(payload) {
       const hasIsValid = payload.companyId && payload.objectiveId && payload.userId;
-      const hasValueString = payload.name.length > 0;
+      const hasValueString = payload.name && payload.name.length > 0;
       const valueGreaterThaZero = payload.initialValue >= 0 && payload.valueCurrent >= 0 && payload.valueTarget >= 0;
-      return payload && hasIsValid && hasValueString && valueGreaterThaZero;
+      const valueCurrentGreatThatValueTarget = payload.valueCurrent > payload.valueTarget;
+      return payload && hasIsValid && hasValueString && valueGreaterThaZero && !valueCurrentGreatThatValueTarget;
     },
     isInitialValueValid(initialValue) {
       const isValid = initialValue && initialValue >= 0;
