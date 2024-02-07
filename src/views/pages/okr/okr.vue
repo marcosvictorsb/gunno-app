@@ -204,10 +204,10 @@
       <div class="field">
         <label for="valorAtual">Novo Valor Atual</label>
         <InputGroup>            
-          <InputNumber id="valorAtual" v-model="valueMensure" required="true" autofocus :class="{'p-invalid': submitted && valueMensure < 0}" />
-          <small class="p-error" v-if="submitted && valueMensure < 0">Valor atual é obrigatório</small>          
+          <InputNumber id="valorAtual" v-model="valueMensure" required="true" autofocus :class="{'p-invalid': submitted && valueMensure < 0}" />                    
           <InputGroupAddon>%</InputGroupAddon>
-        </InputGroup>   
+        </InputGroup>  
+        <small class="p-error" v-if="submitted && (valueMensure === null ? true : false && valueMensure < 0)">Valor atual é obrigatório</small>
       </div>             
 
       <template #footer>
@@ -605,6 +605,8 @@ export default {
       this.valueTarget = resultKey.valueTarget;
       this.IdResultKey = resultKey.id;
       this.isLoading = false;
+      this.submitted = false;
+      this.valueMensure = null;
     },
     hideMensureDialog() {
       this.mensureDialog = false;
@@ -635,6 +637,8 @@ export default {
     },
     async saveMensure() {
       try {
+        this.submitted = true;
+        if (this.valueMensure === null) return;
         const payload = {
           valueCurrent: this.valueMensure,
           resultKeyId: this.IdResultKey
