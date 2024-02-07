@@ -168,12 +168,12 @@
           <InputGroupAddon>%</InputGroupAddon>
         </InputGroup>
         <small class="p-error" v-if="resultkeyValueCurrent > resultkeyValueTarget">Valor Atual não pode ser maior que o Valor Alvo</small>
-        <small class="p-error" v-if="submitted && resultkeyValueTarget === null">Valor alvo é obrigatório</small>
+        <small class="p-error" v-if="submitted && resultkeyValueCurrent === null ? true: false">Valor alvo é obrigatório</small>
       </div>
 
       <div class="field">
         <label for="equipe">Responsável</label>
-        <Dropdown :disabled="disableDropdownUser" v-model="selectedUser" :options="users" filter optionLabel="name" placeholder="Selecione um responsavel" class="w-full md" required="true" autofocus :class="{'p-invalid': submitted && (!selectedUser ||Object.keys(selectedUser).length === 0)}"/>
+        <Dropdown :disabled="disableDropdownUser" v-model="selectedUser" showClear :options="users" filter optionLabel="name" placeholder="Selecione um responsavel" class="w-full md" required="true" autofocus :class="{'p-invalid': submitted && (!selectedUser ||Object.keys(selectedUser).length === 0)}"/>
         <small class="p-error" v-if="submitted && (!selectedUser ||Object.keys(selectedUser).length === 0)">Responsável é obrigatório</small>
       </div>
 
@@ -298,7 +298,8 @@ export default {
       resultkeyNameCreated: null,
       resultkeyInitialValue: null,
       resultkeyValueCurrent: null,
-      resultkeyValueTarget: null
+      resultkeyValueTarget: null,
+      resultkeyId: null
     };
   },
   async created() {
@@ -436,8 +437,6 @@ export default {
     async saveResultKey() {
       try {
         this.submitted = true;
-        console.log(!this.resultkeyNameCreated);
-        console.log(this.submitted && !this.resultkeyNameCreated);
         const payload = {
           name: this.resultkeyNameCreated,
           initialValue: this.resultkeyInitialValue,
@@ -466,14 +465,22 @@ export default {
     },
     async editResultKey(resultkey) {
       try {
+        this.submitted = false;
         this.loading = true;
         this.selectedUser = null;
-        this.resultkey = resultkey;
         this.resultkeyDialog = true;
         this.isEditResultKey = true;
+
+        this.resultkeyNameCreated = resultkey.name;
+        this.resultkeyInitialValue = resultkey.initialValue;
+        this.resultkeyValueCurrent = resultkey.valueCurrent;
+        this.resultkeyValueTarget = resultkey.valueTarget;
+        this.idObjectives = resultkey.objectiveId;
+        this.resultkeyId = resultkey.id;
+
         const { body } = (await UserService.getAllUser(this.idcompany)).data;
         this.users = body.result.users;
-        this.user = this.users.filter((user) => user.id === this.resultkey.userId);
+        this.user = this.users.filter((user) => user.id === resultkey.userId);
         this.selectedUser = this.user[0];
         this.disableDropdownUser = false;
         this.loading = false;
@@ -507,17 +514,17 @@ export default {
     async saveResultKeyEdited() {
       try {
         this.submitted = true;
-        if (!this.isFormResultKeyValid(payload)) return;
         const payload = {
-          name: this.resultkey.name,
-          valueTarget: this.resultkey.valueTarget,
-          initialValue: this.resultkey.initialValue,
-          valueCurrent: this.resultkey.valueCurrent,
-          objectiveId: this.resultkey.objectiveId,
-          userId: this.selectedUser.id,
+          name: this.resultkeyNameCreated,
+          initialValue: this.resultkeyInitialValue,
+          valueCurrent: this.resultkeyValueCurrent,
+          valueTarget: this.resultkeyValueTarget,
+          objectiveId: this.idObjectives,
+          userId: this.selectedUser ? this.selectedUser.id : null,
           companyId: this.idcompany
         };
-        await ResultKeyService.edit(this.resultkey.id, payload);
+        if (!this.isFormResultKeyValid(payload)) return;
+        await ResultKeyService.edit(this.resultkeyId, payload);
         this.resultkeyDialog = false;
         this.toast.add({ severity: 'success', detail: 'Resultado chave editado', life: 3000 });
         this.initialMethods();
@@ -550,11 +557,13 @@ export default {
       });
     },
     isFormResultKeyValid(payload) {
-      const hasIsValid = payload.companyId && payload.objectiveId && payload.userId;
-      const hasValueString = payload.name && payload.name.length > 0;
-      const valueGreaterThaZero = payload.initialValue >= 0 && payload.valueCurrent >= 0 && payload.valueTarget >= 0;
-      const valueCurrentGreatThatValueTarget = payload.valueCurrent > payload.valueTarget;
-      return payload && hasIsValid && hasValueString && valueGreaterThaZero && !valueCurrentGreatThatValueTarget;
+      const { companyId, objectiveId, userId, name, initialValue, valueCurrent, valueTarget } = payload;
+      const hasIsValid = companyId && objectiveId && userId;
+      const hasValueString = name && name.length > 0;
+      const valueValid = initialValue && valueCurrent && valueTarget
+      const valueGreaterThaZero =  initialValue >= 0 && valueCurrent >= 0 && valueTarget >= 0;
+      const valueCurrentGreatThatValueTarget = valueCurrent > valueTarget;
+      return payload && hasIsValid && hasValueString && valueGreaterThaZero && !valueCurrentGreatThatValueTarget && valueValid;
     },
     isInitialValueValid(initialValue) {
       const isValid = initialValue && initialValue >= 0;
