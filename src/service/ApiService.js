@@ -3,7 +3,7 @@ import router from '../router';
 import store from '../store';
 
 const ApiService = axios.create({
-  baseURL: 'http://localhost:3000'
+  baseURL: 'http://localhost:3003'
 });
 
 ApiService.interceptors.response.use(

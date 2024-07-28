@@ -558,12 +558,12 @@ export default {
     },
     isFormResultKeyValid(payload) {
       const { companyId, objectiveId, userId, name, initialValue, valueCurrent, valueTarget } = payload;
-      const hasIsValid = companyId && objectiveId && userId;
+      const isValid = !!companyId && !!objectiveId && !!userId;
       const hasValueString = name && name.length > 0;
-      const valueValid = initialValue && valueCurrent && valueTarget
-      const valueGreaterThaZero =  initialValue >= 0 && valueCurrent >= 0 && valueTarget >= 0;
+      const valueValid = !!initialValue && !!valueCurrent && !!valueTarget;
+      const valueGreaterThaZero = initialValue >= 0 && valueCurrent >= 0 && valueTarget >= 0;
       const valueCurrentGreatThatValueTarget = valueCurrent > valueTarget;
-      return payload && hasIsValid && hasValueString && valueGreaterThaZero && !valueCurrentGreatThatValueTarget && valueValid;
+      return payload && isValid && hasValueString && valueGreaterThaZero && !valueCurrentGreatThatValueTarget && valueValid;
     },
     isInitialValueValid(initialValue) {
       const isValid = initialValue && initialValue >= 0;
